@@ -1,37 +1,64 @@
-// Mapa país → código ISO 2 letras para flagcdn.com
 const ISO = {
+  // Grupo A
   'México':           'mx',
-  'Uzbekistán':       'uz',
+  'Sudáfrica':        'za',
+  'Corea del Sur':    'kr',
+  'Rep. Checa':       'cz',
+  // Grupo B
   'Canadá':           'ca',
-  'EAU':              'ae',
-  'Argentina':        'ar',
-  'Eslovaquia':       'sk',
-  'Chile':            'cl',
-  'Egipto':           'eg',
-  'Estados Unidos':   'us',
-  'Gales':            'gb-wls',
-  'Panamá':           'pa',
-  'Argelia':          'dz',
+  'Bosnia y Herz.':   'ba',
+  'Qatar':            'qa',
+  'Suiza':            'ch',
+  // Grupo C
   'Brasil':           'br',
-  'Arabia Saudita':   'sa',
-  'Costa Rica':       'cr',
-  'Irán':             'ir',
-  'España':           'es',
   'Marruecos':        'ma',
-  'Uruguay':          'uy',
-  'Angola':           'ao',
-  'Francia':          'fr',
-  'Gabón':            'ga',
+  'Haití':            'ht',
+  'Escocia':          'gb-sct',
+  // Grupo D
+  'Estados Unidos':   'us',
+  'Paraguay':         'py',
+  'Australia':        'au',
+  'Turquía':          'tr',
+  // Grupo E
   'Alemania':         'de',
-  'Japón':            'jp',
-  'Portugal':         'pt',
-  'Zimbabwe':         'zw',
-  'Croacia':          'hr',
-  'Senegal':          'sn',
-  'Holanda':          'nl',
+  'Curazao':          'cw',
+  'Costa de Marfil':  'ci',
   'Ecuador':          'ec',
+  // Grupo F
+  'Países Bajos':     'nl',
+  'Japón':            'jp',
+  'Suecia':           'se',
+  'Túnez':            'tn',
+  // Grupo G
+  'Bélgica':          'be',
+  'Egipto':           'eg',
+  'Irán':             'ir',
+  'Nueva Zelanda':    'nz',
+  // Grupo H
+  'España':           'es',
+  'Cabo Verde':       'cv',
+  'Arabia Saudita':   'sa',
+  'Uruguay':          'uy',
+  // Grupo I
+  'Francia':          'fr',
+  'Senegal':          'sn',
+  'Irak':             'iq',
+  'Noruega':          'no',
+  // Grupo J
+  'Argentina':        'ar',
+  'Argelia':          'dz',
+  'Austria':          'at',
+  'Jordania':         'jo',
+  // Grupo K
+  'Portugal':         'pt',
+  'RD del Congo':     'cd',
+  'Uzbekistán':       'uz',
+  'Colombia':         'co',
+  // Grupo L
   'Inglaterra':       'gb-eng',
-  'Camerún':          'cm',
+  'Croacia':          'hr',
+  'Ghana':            'gh',
+  'Panamá':           'pa',
 }
 
 export function flagUrl(team) {
