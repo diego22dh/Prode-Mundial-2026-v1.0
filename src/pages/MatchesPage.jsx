@@ -34,14 +34,28 @@ export default function MatchesPage() {
 
   async function fetchAll() {
     setLoading(true)
-    const [{ data: m }, { data: p }] = await Promise.all([
-      supabase.from('matches').select('*').order('match_date'),
-      supabase.from('predictions').select('*').eq('user_id', user.id)
-    ])
+    // Traer partidos (lectura pública)
+    const { data: m, error: em } = await supabase
+      .from('matches')
+      .select('*')
+      .order('match_date')
+
+    if (em) console.error('Error matches:', em)
     setMatches(m || [])
-    const pMap = {}
-    ;(p || []).forEach(pr => { pMap[pr.match_id] = pr })
-    setPredictions(pMap)
+
+    // Traer predicciones propias (solo si hay sesión)
+    if (user) {
+      const { data: p, error: ep } = await supabase
+        .from('predictions')
+        .select('*')
+        .eq('user_id', user.id)
+
+      if (ep) console.error('Error predictions:', ep)
+      const pMap = {}
+      ;(p || []).forEach(pr => { pMap[pr.match_id] = pr })
+      setPredictions(pMap)
+    }
+
     setLoading(false)
   }
 
