@@ -145,9 +145,9 @@ export default function MatchesPage() {
             const finished = match.status === 'finished'
 
             return (
-              <div key={match.id} className="match-card" style={{ flexWrap: 'wrap', gap: '8px' }}>
+              <div key={match.id} className="match-card" style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', alignItems: 'center', gap: '10px' }}>
                 {/* Teams */}
-                <div className="match-teams" style={{ minWidth: '180px' }}>
+                <div className="match-teams" style={{ minWidth: 0 }}>
                   <Team name={match.home_team} />
                   <span className="match-vs">vs</span>
                   <Team name={match.away_team} />
