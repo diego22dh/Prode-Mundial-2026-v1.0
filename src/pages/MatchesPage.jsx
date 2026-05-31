@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
-import { flag } from '../lib/flags'
+import { flagUrl } from '../lib/flags'
 
 const PHASES = { group:'Fase de grupos', R32:'Ronda 32', R16:'Octavos', QF:'Cuartos', SF:'Semis', '3rd':'3er puesto', F:'Final' }
 
@@ -20,10 +20,10 @@ function ptsClass(pts) {
 }
 
 function Team({ name }) {
-  const f = flag(name)
+  const url = flagUrl(name)
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-      {f && <span role="img" aria-label={name} style={{ fontSize: '16px', fontFamily: 'Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif' }}>{f}</span>}
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+      {url && <img src={url} alt={name} width="24" height="18" style={{ borderRadius: '2px', flexShrink: 0 }} />}
       <span>{name}</span>
     </span>
   )

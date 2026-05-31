@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { flag } from '../lib/flags'
+import { flagUrl } from '../lib/flags'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 
@@ -104,7 +104,7 @@ export default function AdminPage() {
             <div key={m.id} className="admin-row">
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: '13px', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {flag(m.home_team) && <span style={{fontFamily:'Apple Color Emoji,Segoe UI Emoji,Noto Color Emoji,sans-serif'}}>{flag(m.home_team)}</span>} {m.home_team} vs {flag(m.away_team) && <span style={{fontFamily:'Apple Color Emoji,Segoe UI Emoji,Noto Color Emoji,sans-serif'}}>{flag(m.away_team)}</span>} {m.away_team}
+                  {flagUrl(m.home_team) && <img src={flagUrl(m.home_team)} width="20" height="15" style={{borderRadius:'2px'}} alt="" />} {m.home_team} vs {flagUrl(m.away_team) && <img src={flagUrl(m.away_team)} width="20" height="15" style={{borderRadius:'2px'}} alt="" />} {m.away_team}
                 </div>
                 <div style={{ fontSize: '11px', color: 'var(--gray-400)' }}>{formatDate(m.match_date)}</div>
               </div>
