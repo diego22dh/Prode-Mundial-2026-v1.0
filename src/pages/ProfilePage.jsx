@@ -95,9 +95,9 @@ export default function ProfilePage() {
         <div className="card-header">Sistema de puntos</div>
         {[
           { pts: 3, label: 'Resultado exacto', eg: 'Pronosticás 2-1, sale 2-1' },
-          { pts: 2, label: 'Ganador + diferencia', eg: 'Pronosticás 3-1, sale 2-0' },
-          { pts: 1, label: 'Solo ganador/empate', eg: 'Pronosticás 2-0, sale 1-0' },
-          { pts: 0, label: 'Sin acierto', eg: 'Pronosticás empate, gana alguien' },
+          { pts: 2, label: 'Ganador + un gol correcto', eg: 'Pronosticás 2-1, sale 3-1 (visitante ✓) o 2-0 (local ✓)' },
+          { pts: 1, label: 'Solo ganador/empate', eg: 'Pronosticás 2-1, sale 1-0 (ganador ✓, ningún gol)' },
+          { pts: 0, label: 'Sin acierto', eg: 'Pronosticás local, gana visitante o empate' },
         ].map(({ pts, label, eg }) => (
           <div key={pts} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 16px', borderBottom: '1px solid var(--gray-100)' }}>
             <div className={`pts-chip pts-${pts}`} style={{ minWidth: '32px' }}>{pts}</div>
