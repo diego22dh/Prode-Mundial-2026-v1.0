@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { flagUrl } from '../lib/flags'
-import { useRefresh } from '../lib/refreshContext'
+import { useRefresh } from '../lib/refreshContext.jsx'
 
 const PHASES = { group:'Fase de grupos', R32:'Ronda 32', R16:'Octavos', QF:'Cuartos', SF:'Semis', '3rd':'3er puesto', F:'Final' }
 

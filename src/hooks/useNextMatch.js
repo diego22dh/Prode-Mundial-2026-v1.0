@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import { useRefresh } from '../lib/refreshContext'
+import { useRefresh } from '../lib/refreshContext.jsx'
 
 export function useNextMatch(userId) {
   const [nextMatch, setNextMatch] = useState(null)
