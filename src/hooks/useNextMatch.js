@@ -1,16 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
+import { useRefresh } from '../lib/refreshContext'
 
 export function useNextMatch(userId) {
   const [nextMatch, setNextMatch] = useState(null)
   const [myPred, setMyPred] = useState(null)
 
-  useEffect(() => {
-    fetchNext()
-  }, [userId])
-
-  async function fetchNext() {
-    // Próximo partido que todavía acepta pronósticos (>10 min)
+  const fetchNext = useCallback(async () => {
     const cutoff = new Date(Date.now() + 10 * 60 * 1000).toISOString()
     const { data: matches } = await supabase
       .from('matches')
@@ -20,7 +16,7 @@ export function useNextMatch(userId) {
       .order('match_date')
       .limit(1)
 
-    if (!matches?.length) { setNextMatch(null); return }
+    if (!matches?.length) { setNextMatch(null); setMyPred(null); return }
     const match = matches[0]
     setNextMatch(match)
 
@@ -30,10 +26,13 @@ export function useNextMatch(userId) {
         .select('*')
         .eq('user_id', userId)
         .eq('match_id', match.id)
-        .single()
+        .maybeSingle()
       setMyPred(pred || null)
     }
-  }
+  }, [userId])
+
+  const { tick } = useRefresh()
+  useEffect(() => { fetchNext() }, [fetchNext, tick])
 
   return { nextMatch, myPred, refresh: fetchNext }
 }

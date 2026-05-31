@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { RefreshProvider } from './lib/refreshContext'
 import { useAuth } from './hooks/useAuth'
 import Layout from './components/Layout'
 import LoginPage from './pages/LoginPage'
@@ -15,6 +16,7 @@ function PrivateRoute({ children }) {
 
 export default function App() {
   return (
+    <RefreshProvider>
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
@@ -27,5 +29,6 @@ export default function App() {
         </Route>
       </Routes>
     </BrowserRouter>
+    </RefreshProvider>
   )
 }

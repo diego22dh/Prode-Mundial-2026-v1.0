@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { flagUrl } from '../lib/flags'
+import { useRefresh } from '../lib/refreshContext'
 
 const PHASES = { group:'Fase de grupos', R32:'Ronda 32', R16:'Octavos', QF:'Cuartos', SF:'Semis', '3rd':'3er puesto', F:'Final' }
 
@@ -36,6 +37,7 @@ function Team({ name }) {
 
 export default function MatchesPage() {
   const { user } = useAuth()
+  const { triggerRefresh } = useRefresh()
   const [matches, setMatches] = useState([])
   const [predictions, setPredictions] = useState({})
   const [drafts, setDrafts] = useState({})
@@ -105,6 +107,7 @@ export default function MatchesPage() {
     setSavedCount(count)
     setTimeout(() => setSavedCount(0), 3000)
     await fetchAll()
+    triggerRefresh()
     setSaving(false)
   }
 
