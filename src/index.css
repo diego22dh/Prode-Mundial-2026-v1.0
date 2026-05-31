@@ -439,3 +439,17 @@ html.dark .admin-score-input {
   border-color: #3a3a3a;
   color: #eee;
 }
+
+/* Purple saved prediction — dark mode */
+html.dark .score-input[style*="7c3aed"] {
+  background: #2d1b69 !important;
+  color: #c4b5fd !important;
+}
+
+/* Ocultar flechas de inputs type=number */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] { -moz-appearance: textfield; }

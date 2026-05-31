@@ -194,11 +194,11 @@ export default function MatchesPage() {
                     <input
                       className="score-input"
                       type="number" min="0" max="20"
-                      value={draft?.home !== undefined ? draft.home : pred ? pred.pred_home : ''}
+                      value={draft?.home !== undefined ? draft.home : pred != null ? pred.pred_home : ''}
                       onChange={e => handleDraft(match.id, 'home', e.target.value)}
                       style={draft?.home !== undefined
                         ? { borderColor: 'var(--green)', background: 'var(--green-light)' }
-                        : pred
+                        : pred != null
                           ? { borderColor: 'var(--green)', background: 'var(--green-light)', fontWeight: 700 }
                           : {}}
                     />
@@ -206,11 +206,11 @@ export default function MatchesPage() {
                     <input
                       className="score-input"
                       type="number" min="0" max="20"
-                      value={draft?.away !== undefined ? draft.away : pred ? pred.pred_away : ''}
+                      value={draft?.away !== undefined ? draft.away : pred != null ? pred.pred_away : ''}
                       onChange={e => handleDraft(match.id, 'away', e.target.value)}
                       style={draft?.away !== undefined
                         ? { borderColor: 'var(--green)', background: 'var(--green-light)' }
-                        : pred
+                        : pred != null
                           ? { borderColor: 'var(--green)', background: 'var(--green-light)', fontWeight: 700 }
                           : {}}
                     />
