@@ -54,8 +54,6 @@ function NextMatchBanner({ userId }) {
   if (!nextMatch) return null
 
   const matchTime = formatBsAs(nextMatch.match_date, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
-  const hasPred = !!myPred
-
   const homeFlag = flagUrl(nextMatch.home_team)
   const awayFlag = flagUrl(nextMatch.away_team)
 
@@ -82,16 +80,7 @@ function NextMatchBanner({ userId }) {
         <span style={{ fontWeight: 500 }}>{nextMatch.away_team}</span>
         <span style={{ opacity: .6, fontSize: '11px' }}>{matchTime}</span>
       </div>
-      <span style={{
-        fontSize: '10px',
-        padding: '2px 8px',
-        borderRadius: '10px',
-        background: hasPred ? 'rgba(100,220,100,.25)' : 'rgba(220,100,100,.3)',
-        color: hasPred ? '#90ee90' : '#ffaaaa',
-        whiteSpace: 'nowrap'
-      }}>
-        {hasPred ? '✓ Pronosticado' : '⚠ Sin pronóstico'}
-      </span>
+
     </div>
   )
 }

@@ -194,26 +194,24 @@ export default function MatchesPage() {
                     <input
                       className="score-input"
                       type="number" min="0" max="20"
-                      value={draft?.home !== undefined ? draft.home : ''}
-                      placeholder={pred !== undefined ? String(pred.pred_home) : '0'}
+                      value={draft?.home !== undefined ? draft.home : pred ? pred.pred_home : ''}
                       onChange={e => handleDraft(match.id, 'home', e.target.value)}
-                      style={pred && draft?.home === undefined
+                      style={draft?.home !== undefined
                         ? { borderColor: 'var(--green)', background: 'var(--green-light)' }
-                        : draft?.home !== undefined
-                          ? { borderColor: 'var(--green)', background: 'var(--green-light)' }
+                        : pred
+                          ? { borderColor: 'var(--green)', background: 'var(--green-light)', fontWeight: 700 }
                           : {}}
                     />
                     <span className="score-sep">-</span>
                     <input
                       className="score-input"
                       type="number" min="0" max="20"
-                      value={draft?.away !== undefined ? draft.away : ''}
-                      placeholder={pred !== undefined ? String(pred.pred_away) : '0'}
+                      value={draft?.away !== undefined ? draft.away : pred ? pred.pred_away : ''}
                       onChange={e => handleDraft(match.id, 'away', e.target.value)}
-                      style={pred && draft?.away === undefined
+                      style={draft?.away !== undefined
                         ? { borderColor: 'var(--green)', background: 'var(--green-light)' }
-                        : draft?.away !== undefined
-                          ? { borderColor: 'var(--green)', background: 'var(--green-light)' }
+                        : pred
+                          ? { borderColor: 'var(--green)', background: 'var(--green-light)', fontWeight: 700 }
                           : {}}
                     />
                   </div>
