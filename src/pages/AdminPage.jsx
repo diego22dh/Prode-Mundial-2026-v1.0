@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { flag } from '../lib/flags'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 
@@ -103,7 +104,7 @@ export default function AdminPage() {
             <div key={m.id} className="admin-row">
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: '13px', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {m.home_team} vs {m.away_team}
+                  {flag(m.home_team)} {m.home_team} vs {flag(m.away_team)} {m.away_team}
                 </div>
                 <div style={{ fontSize: '11px', color: 'var(--gray-400)' }}>{formatDate(m.match_date)}</div>
               </div>

@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+import { flag } from '../lib/flags'
 
 const PHASES = { group:'Fase de grupos', R32:'Ronda 32', R16:'Octavos', QF:'Cuartos', SF:'Semis', '3rd':'3er puesto', F:'Final' }
 
@@ -18,15 +19,24 @@ function ptsClass(pts) {
   return `pts-chip pts-${pts}`
 }
 
+function Team({ name }) {
+  return (
+    <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+      <span style={{ fontSize: '18px', lineHeight: 1 }}>{flag(name)}</span>
+      <span>{name}</span>
+    </span>
+  )
+}
+
 export default function MatchesPage() {
   const { user } = useAuth()
   const [matches, setMatches] = useState([])
-  const [predictions, setPredictions] = useState({}) // matchId -> {pred_home, pred_away, points, scored_at}
-  const [drafts, setDrafts] = useState({})           // matchId -> {home, away}
+  const [predictions, setPredictions] = useState({})
+  const [drafts, setDrafts] = useState({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [savedCount, setSavedCount] = useState(0)
-  const [tab, setTab] = useState('upcoming') // 'upcoming' | 'finished'
+  const [tab, setTab] = useState('upcoming')
 
   const hasDrafts = Object.keys(drafts).length > 0
 
@@ -34,7 +44,6 @@ export default function MatchesPage() {
 
   async function fetchAll() {
     setLoading(true)
-    // Traer partidos (lectura pública)
     const { data: m, error: em } = await supabase
       .from('matches')
       .select('*')
@@ -43,7 +52,6 @@ export default function MatchesPage() {
     if (em) console.error('Error matches:', em)
     setMatches(m || [])
 
-    // Traer predicciones propias (solo si hay sesión)
     if (user) {
       const { data: p, error: ep } = await supabase
         .from('predictions')
@@ -94,7 +102,6 @@ export default function MatchesPage() {
     setSaving(false)
   }
 
-  // Group matches by group/phase
   const grouped = {}
   const filteredMatches = matches.filter(m =>
     tab === 'upcoming' ? m.status !== 'finished' : m.status === 'finished'
@@ -132,24 +139,22 @@ export default function MatchesPage() {
             const finished = match.status === 'finished'
 
             return (
-              <div key={match.id} className="match-card">
+              <div key={match.id} className="match-card" style={{ flexWrap: 'wrap', gap: '8px' }}>
                 {/* Teams */}
-                <div className="match-teams">
-                  <span>{match.home_team}</span>
+                <div className="match-teams" style={{ minWidth: '180px' }}>
+                  <Team name={match.home_team} />
                   <span className="match-vs">vs</span>
-                  <span>{match.away_team}</span>
+                  <Team name={match.away_team} />
                 </div>
 
                 {/* Result or prediction inputs */}
                 {finished ? (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    {/* Official result */}
                     <div className="score-result">
                       <span>{match.home_score}</span>
                       <span className="sep">-</span>
                       <span>{match.away_score}</span>
                     </div>
-                    {/* User prediction */}
                     {pred && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span style={{ fontSize: '12px', color: 'var(--gray-400)' }}>
@@ -195,7 +200,6 @@ export default function MatchesPage() {
         </div>
       ))}
 
-      {/* Save bar */}
       {hasDrafts && (
         <div className="save-bar">
           <span>{Object.keys(drafts).length} pronóstico(s) sin guardar</span>
