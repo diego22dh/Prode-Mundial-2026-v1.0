@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { flagUrl } from '../lib/flags'
@@ -21,9 +21,7 @@ function isClosedForBetting(matchDate) {
   return new Date(matchDate) <= new Date(Date.now() + 10 * 60 * 1000)
 }
 
-function ptsClass(pts) {
-  return `pts-chip pts-${pts}`
-}
+function ptsClass(pts) { return `pts-chip pts-${pts}` }
 
 function Team({ name }) {
   const url = flagUrl(name)
@@ -48,32 +46,44 @@ export default function MatchesPage() {
 
   const hasDrafts = Object.keys(drafts).length > 0
 
-  useEffect(() => { fetchAll() }, [])
-
-  async function fetchAll() {
-    setLoading(true)
-    const { data: m, error: em } = await supabase
+  // Fetch matches (público, sin depender de user)
+  const fetchMatches = useCallback(async () => {
+    const { data, error } = await supabase
       .from('matches')
       .select('*')
       .order('match_date')
+    if (error) console.error('Error matches:', error)
+    return data || []
+  }, [])
 
-    if (em) console.error('Error matches:', em)
-    setMatches(m || [])
+  // Fetch predictions del usuario
+  const fetchPredictions = useCallback(async (userId) => {
+    if (!userId) return {}
+    const { data, error } = await supabase
+      .from('predictions')
+      .select('*')
+      .eq('user_id', userId)
+    if (error) console.error('Error predictions:', error)
+    const pMap = {}
+    ;(data || []).forEach(pr => { pMap[pr.match_id] = pr })
+    return pMap
+  }, [])
 
-    if (user) {
-      const { data: p, error: ep } = await supabase
-        .from('predictions')
-        .select('*')
-        .eq('user_id', user.id)
-
-      if (ep) console.error('Error predictions:', ep)
-      const pMap = {}
-      ;(p || []).forEach(pr => { pMap[pr.match_id] = pr })
+  // Carga inicial — espera a que user esté disponible
+  useEffect(() => {
+    if (user === undefined) return  // auth todavía cargando
+    async function load() {
+      setLoading(true)
+      const [m, pMap] = await Promise.all([
+        fetchMatches(),
+        fetchPredictions(user?.id)
+      ])
+      setMatches(m)
       setPredictions(pMap)
+      setLoading(false)
     }
-
-    setLoading(false)
-  }
+    load()
+  }, [user, fetchMatches, fetchPredictions])
 
   function handleDraft(matchId, side, val) {
     const num = val === '' ? '' : Math.max(0, Math.min(20, parseInt(val) || 0))
@@ -86,29 +96,53 @@ export default function MatchesPage() {
   async function saveDrafts() {
     setSaving(true)
     let count = 0
+
+    // Construir las predicciones actualizadas localmente
+    const newPredictions = { ...predictions }
+
     for (const [matchId, { home, away }] of Object.entries(drafts)) {
       if (home === '' || away === '' || home === undefined || away === undefined) continue
-      const existing = predictions[parseInt(matchId)]
+      const mid = parseInt(matchId)
+      const existing = predictions[mid]
       let error
+
       if (existing) {
-        ({ error } = await supabase
+        ;({ error } = await supabase
           .from('predictions')
           .update({ pred_home: home, pred_away: away })
           .eq('user_id', user.id)
-          .eq('match_id', matchId))
+          .eq('match_id', mid))
       } else {
-        ({ error } = await supabase
+        ;({ error } = await supabase
           .from('predictions')
-          .insert({ user_id: user.id, match_id: parseInt(matchId), pred_home: home, pred_away: away }))
+          .insert({ user_id: user.id, match_id: mid, pred_home: home, pred_away: away }))
       }
-      if (!error) count++
+
+      if (!error) {
+        count++
+        // Actualizar localmente de inmediato sin esperar fetchAll
+        newPredictions[mid] = {
+          ...(existing || {}),
+          user_id: user.id,
+          match_id: mid,
+          pred_home: home,
+          pred_away: away,
+          points: existing?.points ?? 0,
+          scored_at: existing?.scored_at ?? null,
+        }
+      }
     }
+
+    // Primero actualizar el estado local — el usuario ve el nuevo valor al instante
+    setPredictions(newPredictions)
     setDrafts({})
     setSavedCount(count)
     setTimeout(() => setSavedCount(0), 3000)
-    await fetchAll()
     triggerRefresh()
     setSaving(false)
+
+    // Luego sincronizar con la DB en background (sin bloquear la UI)
+    fetchPredictions(user.id).then(pMap => setPredictions(pMap))
   }
 
   const grouped = {}
@@ -146,17 +180,17 @@ export default function MatchesPage() {
             const draft = drafts[match.id]
             const closed = isClosedForBetting(match.match_date)
             const finished = match.status === 'finished'
+            const hasSaved = pred != null
+            const isEditing = draft?.home !== undefined || draft?.away !== undefined
 
             return (
               <div key={match.id} className="match-card" style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', alignItems: 'center', gap: '10px' }}>
-                {/* Teams */}
                 <div className="match-teams" style={{ minWidth: 0 }}>
                   <Team name={match.home_team} />
                   <span className="match-vs">vs</span>
                   <Team name={match.away_team} />
                 </div>
 
-                {/* Result or prediction inputs */}
                 {finished ? (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div className="score-result">
@@ -164,7 +198,7 @@ export default function MatchesPage() {
                       <span className="sep">-</span>
                       <span>{match.away_score}</span>
                     </div>
-                    {pred && (
+                    {hasSaved && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span style={{ fontSize: '12px', color: 'var(--gray-400)' }}>
                           {pred.pred_home}-{pred.pred_away}
@@ -172,33 +206,33 @@ export default function MatchesPage() {
                         <div className={ptsClass(pred.points)}>{pred.points}</div>
                       </div>
                     )}
-                    {!pred && <span style={{ fontSize: '12px', color: 'var(--gray-400)' }}>Sin prono.</span>}
+                    {!hasSaved && <span style={{ fontSize: '12px', color: 'var(--gray-400)' }}>Sin prono.</span>}
                   </div>
+
                 ) : closed ? (
-                  pred ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <div style={{
-                        display: 'flex', alignItems: 'center', gap: '4px',
-                        background: '#ede9fe', border: '1px solid #7c3aed',
-                        borderRadius: '6px', padding: '3px 10px',
-                        fontSize: '15px', fontWeight: 700, color: '#5b21b6'
-                      }}>
-                        {pred.pred_home}<span style={{ opacity: .5, fontSize: '12px' }}>-</span>{pred.pred_away}
-                      </div>
+                  hasSaved ? (
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: '4px',
+                      background: '#ede9fe', border: '1px solid #7c3aed',
+                      borderRadius: '6px', padding: '3px 10px',
+                      fontSize: '15px', fontWeight: 700, color: '#5b21b6'
+                    }}>
+                      {pred.pred_home}<span style={{ opacity: .5, fontSize: '12px' }}>-</span>{pred.pred_away}
                     </div>
                   ) : (
                     <span className="badge badge-red">Cerrado</span>
                   )
+
                 ) : (
                   <div className="score-inputs">
                     <input
                       className="score-input"
                       type="number" min="0" max="20"
-                      value={draft?.home !== undefined ? draft.home : pred != null ? pred.pred_home : ''}
+                      value={draft?.home !== undefined ? draft.home : hasSaved ? pred.pred_home : ''}
                       onChange={e => handleDraft(match.id, 'home', e.target.value)}
-                      style={draft?.home !== undefined
+                      style={isEditing
                         ? { borderColor: 'var(--green)', background: 'var(--green-light)' }
-                        : pred != null
+                        : hasSaved
                           ? { borderColor: 'var(--green)', background: 'var(--green-light)', fontWeight: 700 }
                           : {}}
                     />
@@ -206,11 +240,11 @@ export default function MatchesPage() {
                     <input
                       className="score-input"
                       type="number" min="0" max="20"
-                      value={draft?.away !== undefined ? draft.away : pred != null ? pred.pred_away : ''}
+                      value={draft?.away !== undefined ? draft.away : hasSaved ? pred.pred_away : ''}
                       onChange={e => handleDraft(match.id, 'away', e.target.value)}
-                      style={draft?.away !== undefined
+                      style={isEditing
                         ? { borderColor: 'var(--green)', background: 'var(--green-light)' }
-                        : pred != null
+                        : hasSaved
                           ? { borderColor: 'var(--green)', background: 'var(--green-light)', fontWeight: 700 }
                           : {}}
                     />
