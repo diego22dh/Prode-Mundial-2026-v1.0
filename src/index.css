@@ -347,3 +347,95 @@ input, select { font-family: inherit; }
   .match-teams { font-size: 13px; }
   .match-date { display: none; }
 }
+
+/* ============================================================
+   DARK MODE
+   ============================================================ */
+html.dark {
+  --green: #2d8a45;
+  --green-light: #1a3320;
+  --green-dark: #90d4a0;
+  --gold: #e0b830;
+  --gold-light: #2a2410;
+  --gray-50: #1a1a1a;
+  --gray-100: #111111;
+  --gray-200: #2a2a2a;
+  --gray-400: #888888;
+  --gray-600: #bbbbbb;
+  --gray-800: #eeeeee;
+  --white: #1e1e1e;
+  --shadow: 0 1px 3px rgba(0,0,0,.4);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.5);
+}
+
+html.dark body {
+  background: #0d0d0d;
+  color: #eeeeee;
+}
+
+html.dark .topbar {
+  background: #0f3d1a;
+}
+
+html.dark .card {
+  background: #1e1e1e;
+  border: 1px solid #2a2a2a;
+}
+
+html.dark .input {
+  background: #2a2a2a;
+  border-color: #3a3a3a;
+  color: #eee;
+}
+
+html.dark .input:focus {
+  background: #333;
+  border-color: var(--green);
+}
+
+html.dark .score-input {
+  background: #2a2a2a;
+  border-color: #3a3a3a;
+  color: #eee;
+}
+
+html.dark .score-input:focus {
+  background: #333;
+  border-color: var(--green);
+}
+
+html.dark .bottom-nav {
+  background: #1e1e1e;
+  border-top-color: #2a2a2a;
+}
+
+html.dark .nav-item { color: #666; }
+html.dark .nav-item.active { color: var(--green); }
+
+html.dark .tabs { background: #1e1e1e; border-bottom-color: #2a2a2a; }
+html.dark .tab-btn { color: #666; }
+html.dark .tab-btn.active { color: var(--green); border-bottom-color: var(--green); }
+html.dark .tab-btn:hover:not(.active) { background: #2a2a2a; }
+
+html.dark .group-header { background: #161616; color: #888; border-bottom-color: #2a2a2a; }
+html.dark .match-card { border-bottom-color: #2a2a2a; }
+html.dark .lb-row { background: #252525; }
+html.dark .lb-row.me { background: #1a3320; }
+
+html.dark .btn-google {
+  background: #2a2a2a;
+  border-color: #3a3a3a;
+  color: #eee;
+}
+html.dark .btn-google:hover { background: #333; }
+
+html.dark .alert-error { background: #2a1515; color: #ffaaaa; }
+html.dark .alert-success { background: #1a3320; color: #90d4a0; }
+
+html.dark .save-bar { background: #1a5e2a; }
+
+html.dark .admin-score-input {
+  background: #2a2a2a;
+  border-color: #3a3a3a;
+  color: #eee;
+}

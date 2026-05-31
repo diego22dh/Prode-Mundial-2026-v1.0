@@ -1,5 +1,9 @@
+import { useState, useEffect } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { useDarkMode } from '../hooks/useDarkMode'
+import { useNextMatch } from '../hooks/useNextMatch'
+import { flagUrl } from '../lib/flags'
 
 const IconBall = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -22,9 +26,79 @@ const IconUser = () => (
     <circle cx="12" cy="7" r="4"/>
   </svg>
 )
+const IconSun = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="18" height="18">
+    <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/>
+    <line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/>
+    <line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+  </svg>
+)
+const IconMoon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="18" height="18">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+  </svg>
+)
+
+function formatBsAs(iso, opts) {
+  return new Date(iso).toLocaleString('es-AR', {
+    timeZone: 'America/Argentina/Buenos_Aires', ...opts
+  })
+}
+
+function NextMatchBanner({ userId }) {
+  const { nextMatch, myPred } = useNextMatch(userId)
+  const navigate = useNavigate()
+
+  if (!nextMatch) return null
+
+  const matchTime = formatBsAs(nextMatch.match_date, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+  const hasPred = !!myPred
+
+  const homeFlag = flagUrl(nextMatch.home_team)
+  const awayFlag = flagUrl(nextMatch.away_team)
+
+  return (
+    <div
+      onClick={() => navigate('/partidos')}
+      style={{
+        background: 'rgba(0,0,0,.25)',
+        padding: '8px 16px',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '8px',
+        borderTop: '1px solid rgba(255,255,255,.1)'
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#fff', flexWrap: 'wrap' }}>
+        <span style={{ fontSize: '10px', opacity: .7, whiteSpace: 'nowrap' }}>PRÓXIMO</span>
+        {homeFlag && <img src={homeFlag} width="18" height="14" style={{ borderRadius: '2px' }} alt="" />}
+        <span style={{ fontWeight: 500 }}>{nextMatch.home_team}</span>
+        <span style={{ opacity: .5 }}>vs</span>
+        {awayFlag && <img src={awayFlag} width="18" height="14" style={{ borderRadius: '2px' }} alt="" />}
+        <span style={{ fontWeight: 500 }}>{nextMatch.away_team}</span>
+        <span style={{ opacity: .6, fontSize: '11px' }}>{matchTime}</span>
+      </div>
+      <span style={{
+        fontSize: '10px',
+        padding: '2px 8px',
+        borderRadius: '10px',
+        background: hasPred ? 'rgba(100,220,100,.25)' : 'rgba(220,100,100,.3)',
+        color: hasPred ? '#90ee90' : '#ffaaaa',
+        whiteSpace: 'nowrap'
+      }}>
+        {hasPred ? `✓ ${myPred.pred_home}-${myPred.pred_away}` : '⚠ Sin pronóstico'}
+      </span>
+    </div>
+  )
+}
 
 export default function Layout() {
-  const { profile, signOut } = useAuth()
+  const { profile, user, signOut } = useAuth()
+  const [dark, setDark] = useDarkMode()
   const navigate = useNavigate()
   const { pathname } = useLocation()
 
@@ -34,22 +108,33 @@ export default function Layout() {
 
   return (
     <>
-      <header className="topbar">
-        <div>
-          <div className="topbar-title">⚽ Mundial 2026</div>
-          <div className="topbar-sub">Torneo de pronósticos</div>
-        </div>
-        <div className="topbar-right">
-          {profile?.is_admin && (
+      <header className="topbar" style={{ flexDirection: 'column', height: 'auto', padding: 0 }}>
+        {/* Main bar */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', height: '56px', width: '100%' }}>
+          <div>
+            <div className="topbar-title">⚽ Mundial 2026</div>
+            <div className="topbar-sub">Torneo de pronósticos</div>
+          </div>
+          <div className="topbar-right">
+            {profile?.is_admin && (
+              <button className="btn-logout" onClick={() => navigate('/admin')} style={{ background: 'rgba(201,162,39,.3)' }}>
+                Admin
+              </button>
+            )}
+            {/* Dark mode toggle */}
             <button
-              className="btn-logout"
-              onClick={() => navigate('/admin')}
-              style={{ background: 'rgba(201,162,39,.3)' }}
-            >Admin</button>
-          )}
-          <div className="avatar" title={profile?.username}>{initials}</div>
-          <button className="btn-logout" onClick={signOut}>Salir</button>
+              onClick={() => setDark(d => !d)}
+              style={{ background: 'rgba(255,255,255,.15)', border: 'none', color: '#fff', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+              title={dark ? 'Modo claro' : 'Modo oscuro'}
+            >
+              {dark ? <IconSun /> : <IconMoon />}
+            </button>
+            <div className="avatar" title={profile?.username}>{initials}</div>
+            <button className="btn-logout" onClick={signOut}>Salir</button>
+          </div>
         </div>
+        {/* Next match banner */}
+        <NextMatchBanner userId={user?.id} />
       </header>
 
       <main className="container page">
@@ -57,26 +142,14 @@ export default function Layout() {
       </main>
 
       <nav className="bottom-nav">
-        <button
-          className={`nav-item ${pathname === '/partidos' ? 'active' : ''}`}
-          onClick={() => navigate('/partidos')}
-        >
-          <IconBall />
-          <span className="nav-label">Partidos</span>
+        <button className={`nav-item ${pathname === '/partidos' ? 'active' : ''}`} onClick={() => navigate('/partidos')}>
+          <IconBall /><span className="nav-label">Partidos</span>
         </button>
-        <button
-          className={`nav-item ${pathname === '/tabla' ? 'active' : ''}`}
-          onClick={() => navigate('/tabla')}
-        >
-          <IconTrophy />
-          <span className="nav-label">Tabla</span>
+        <button className={`nav-item ${pathname === '/tabla' ? 'active' : ''}`} onClick={() => navigate('/tabla')}>
+          <IconTrophy /><span className="nav-label">Tabla</span>
         </button>
-        <button
-          className={`nav-item ${pathname === '/perfil' ? 'active' : ''}`}
-          onClick={() => navigate('/perfil')}
-        >
-          <IconUser />
-          <span className="nav-label">Perfil</span>
+        <button className={`nav-item ${pathname === '/perfil' ? 'active' : ''}`} onClick={() => navigate('/perfil')}>
+          <IconUser /><span className="nav-label">Perfil</span>
         </button>
       </nav>
     </>

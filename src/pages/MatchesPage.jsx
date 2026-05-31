@@ -7,12 +7,17 @@ const PHASES = { group:'Fase de grupos', R32:'Ronda 32', R16:'Octavos', QF:'Cuar
 
 function formatDate(iso) {
   const d = new Date(iso)
-  return d.toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit' }) + ' ' +
-    d.toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' })
+  return d.toLocaleDateString('es-AR', {
+    timeZone: 'America/Argentina/Buenos_Aires',
+    day: '2-digit', month: '2-digit'
+  }) + ' ' + d.toLocaleTimeString('es-AR', {
+    timeZone: 'America/Argentina/Buenos_Aires',
+    hour: '2-digit', minute: '2-digit'
+  })
 }
 
 function isClosedForBetting(matchDate) {
-  return new Date(matchDate) <= new Date(Date.now() + 60 * 60 * 1000)
+  return new Date(matchDate) <= new Date(Date.now() + 10 * 60 * 1000)
 }
 
 function ptsClass(pts) {
@@ -194,7 +199,10 @@ export default function MatchesPage() {
                   </div>
                 )}
 
-                <div className="match-date">{formatDate(match.match_date)}</div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px', minWidth: '80px' }}>
+                  <div className="match-date">{formatDate(match.match_date)}</div>
+                  {match.venue && <div style={{ fontSize: '10px', color: 'var(--gray-400)', textAlign: 'right', lineHeight: 1.2 }}>{match.venue.split(',')[0]}</div>}
+                </div>
               </div>
             )
           })}
