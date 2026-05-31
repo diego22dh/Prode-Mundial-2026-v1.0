@@ -90,7 +90,7 @@ function NextMatchBanner({ userId }) {
         color: hasPred ? '#90ee90' : '#ffaaaa',
         whiteSpace: 'nowrap'
       }}>
-        {hasPred ? `✓ ${myPred.pred_home}-${myPred.pred_away}` : '⚠ Sin pronóstico'}
+        {hasPred ? '✓ Pronosticado' : '⚠ Sin pronóstico'}
       </span>
     </div>
   )

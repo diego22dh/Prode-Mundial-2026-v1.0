@@ -176,8 +176,15 @@ export default function MatchesPage() {
                   </div>
                 ) : closed ? (
                   pred ? (
-                    <div style={{ fontSize: '13px', color: 'var(--gray-600)', fontWeight: 500 }}>
-                      {pred.pred_home} - {pred.pred_away}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <div style={{
+                        display: 'flex', alignItems: 'center', gap: '4px',
+                        background: '#ede9fe', border: '1px solid #7c3aed',
+                        borderRadius: '6px', padding: '3px 10px',
+                        fontSize: '15px', fontWeight: 700, color: '#5b21b6'
+                      }}>
+                        {pred.pred_home}<span style={{ opacity: .5, fontSize: '12px' }}>-</span>{pred.pred_away}
+                      </div>
                     </div>
                   ) : (
                     <span className="badge badge-red">Cerrado</span>
@@ -187,17 +194,27 @@ export default function MatchesPage() {
                     <input
                       className="score-input"
                       type="number" min="0" max="20"
-                      value={draft?.home !== undefined ? draft.home : (pred ? pred.pred_home : '')}
+                      value={draft?.home !== undefined ? draft.home : ''}
+                      placeholder={pred !== undefined ? String(pred.pred_home) : '0'}
                       onChange={e => handleDraft(match.id, 'home', e.target.value)}
-                      style={pred && draft?.home === undefined ? { borderColor: 'var(--green)', background: 'var(--green-light)' } : {}}
+                      style={pred && draft?.home === undefined
+                        ? { borderColor: 'var(--green)', background: 'var(--green-light)' }
+                        : draft?.home !== undefined
+                          ? { borderColor: 'var(--green)', background: 'var(--green-light)' }
+                          : {}}
                     />
                     <span className="score-sep">-</span>
                     <input
                       className="score-input"
                       type="number" min="0" max="20"
-                      value={draft?.away !== undefined ? draft.away : (pred ? pred.pred_away : '')}
+                      value={draft?.away !== undefined ? draft.away : ''}
+                      placeholder={pred !== undefined ? String(pred.pred_away) : '0'}
                       onChange={e => handleDraft(match.id, 'away', e.target.value)}
-                      style={pred && draft?.away === undefined ? { borderColor: 'var(--green)', background: 'var(--green-light)' } : {}}
+                      style={pred && draft?.away === undefined
+                        ? { borderColor: 'var(--green)', background: 'var(--green-light)' }
+                        : draft?.away !== undefined
+                          ? { borderColor: 'var(--green)', background: 'var(--green-light)' }
+                          : {}}
                     />
                   </div>
                 )}
