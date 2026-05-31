@@ -199,9 +199,9 @@ export default function MatchesPage() {
                   </div>
                 )}
 
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px', minWidth: '80px' }}>
-                  <div className="match-date">{formatDate(match.match_date)}</div>
-                  {match.venue && <div style={{ fontSize: '10px', color: 'var(--gray-400)', textAlign: 'right', lineHeight: 1.2 }}>{match.venue.split(',')[0]}</div>}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px', width: '80px', flexShrink: 0 }}>
+                  <div className="match-date" style={{ whiteSpace: 'nowrap' }}>{formatDate(match.match_date)}</div>
+                  {match.venue && <div style={{ fontSize: '10px', color: 'var(--gray-400)', textAlign: 'right', lineHeight: 1.2, width: '80px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{match.venue.split(',')[0]}</div>}
                 </div>
               </div>
             )
