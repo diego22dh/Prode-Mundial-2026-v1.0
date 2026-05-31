@@ -104,7 +104,7 @@ export default function AdminPage() {
             <div key={m.id} className="admin-row">
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: '13px', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {flag(m.home_team)} {m.home_team} vs {flag(m.away_team)} {m.away_team}
+                  {flag(m.home_team) && <span style={{fontFamily:'Apple Color Emoji,Segoe UI Emoji,Noto Color Emoji,sans-serif'}}>{flag(m.home_team)}</span>} {m.home_team} vs {flag(m.away_team) && <span style={{fontFamily:'Apple Color Emoji,Segoe UI Emoji,Noto Color Emoji,sans-serif'}}>{flag(m.away_team)}</span>} {m.away_team}
                 </div>
                 <div style={{ fontSize: '11px', color: 'var(--gray-400)' }}>{formatDate(m.match_date)}</div>
               </div>

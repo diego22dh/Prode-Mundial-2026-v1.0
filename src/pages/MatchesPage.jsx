@@ -20,9 +20,10 @@ function ptsClass(pts) {
 }
 
 function Team({ name }) {
+  const f = flag(name)
   return (
-    <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-      <span style={{ fontSize: '18px', lineHeight: 1 }}>{flag(name)}</span>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+      {f && <span role="img" aria-label={name} style={{ fontSize: '16px', fontFamily: 'Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif' }}>{f}</span>}
       <span>{name}</span>
     </span>
   )
