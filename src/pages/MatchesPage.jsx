@@ -58,35 +58,36 @@ export default function MatchesPage() {
     return data || []
   }, [])
 
-  // Fetch predictions del usuario
-  const fetchPredictions = useCallback(async (userId) => {
-    if (!userId) return {}
+  // Fetch predictions del usuario — recibe tournamentId como parámetro
+  const fetchPredictions = useCallback(async (userId, tournamentId) => {
+    if (!userId || !tournamentId) return {}
     const { data, error } = await supabase
       .from('predictions')
       .select('*')
       .eq('user_id', userId)
-      .eq('tournament_id', activeTournament?.id ?? -1)
+      .eq('tournament_id', tournamentId)
     if (error) console.error('Error predictions:', error)
     const pMap = {}
     ;(data || []).forEach(pr => { pMap[pr.match_id] = pr })
     return pMap
   }, [])
 
-  // Carga inicial — espera a que user esté disponible
+  // Carga inicial — espera a que user y activeTournament estén disponibles
   useEffect(() => {
     if (user === undefined) return  // auth todavía cargando
+    if (!activeTournament?.id) return  // torneo todavía no seleccionado
     async function load() {
       setLoading(true)
       const [m, pMap] = await Promise.all([
         fetchMatches(),
-        fetchPredictions(user?.id)
+        fetchPredictions(user?.id, activeTournament.id)
       ])
       setMatches(m)
       setPredictions(pMap)
       setLoading(false)
     }
     load()
-  }, [user, fetchMatches, fetchPredictions])
+  }, [user, activeTournament, fetchMatches, fetchPredictions])
 
   function handleDraft(matchId, side, val) {
     const num = val === '' ? '' : Math.max(0, Math.min(20, parseInt(val) || 0))
@@ -150,7 +151,7 @@ export default function MatchesPage() {
     setSaving(false)
 
     // Sincronizar con DB en background
-    fetchPredictions(user.id).then(pMap => setPredictions(pMap))
+    fetchPredictions(user.id, activeTournament?.id).then(pMap => setPredictions(pMap))
   }
 
   const grouped = {}
