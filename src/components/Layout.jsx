@@ -20,6 +20,11 @@ const IconTrophy = () => (
     <path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/>
   </svg>
 )
+const IconBook = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+  </svg>
+)
 const IconGrid = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
@@ -145,6 +150,9 @@ export default function Layout() {
         </button>
         <button className={`nav-item ${pathname === '/torneos' ? 'active' : ''}`} onClick={() => navigate('/torneos')}>
           <IconGrid /><span className="nav-label">Torneos</span>
+        </button>
+        <button className={`nav-item ${pathname === '/reglamento' ? 'active' : ''}`} onClick={() => navigate('/reglamento')}>
+          <IconBook /><span className="nav-label">Reglas</span>
         </button>
         <button className={`nav-item ${pathname === '/perfil' ? 'active' : ''}`} onClick={() => navigate('/perfil')}>
           <IconUser /><span className="nav-label">Perfil</span>

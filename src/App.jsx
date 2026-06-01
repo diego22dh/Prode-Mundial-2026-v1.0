@@ -7,6 +7,7 @@ import MatchesPage from './pages/MatchesPage'
 import LeaderboardPage from './pages/LeaderboardPage'
 import ProfilePage from './pages/ProfilePage'
 import TournamentsPage from './pages/TournamentsPage'
+import ReglamentoPage from './pages/ReglamentoPage'
 import AdminPage from './pages/AdminPage'
 
 function PrivateRoute({ children }) {
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="tabla" element={<LeaderboardPage />} />
           <Route path="perfil" element={<ProfilePage />} />
           <Route path="torneos" element={<TournamentsPage />} />
+          <Route path="reglamento" element={<ReglamentoPage />} />
           <Route path="admin" element={<AdminPage />} />
         </Route>
       </Routes>
