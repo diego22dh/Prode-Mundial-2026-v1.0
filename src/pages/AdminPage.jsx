@@ -274,6 +274,199 @@ function UsersTab({ currentProfile }) {
 }
 
 
+
+// ─── Sección: Partidos eliminatorios ─────────────────────
+const ELIM_PHASES = [
+  { value: 'R32', label: 'Ronda de 32' },
+  { value: 'R16', label: 'Octavos de final' },
+  { value: 'QF',  label: 'Cuartos de final' },
+  { value: 'SF',  label: 'Semifinal' },
+  { value: '3rd', label: 'Tercer puesto' },
+  { value: 'F',   label: 'Final' },
+]
+
+function EliminatoriosTab() {
+  const [matches, setMatches] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [msg, setMsg] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm] = useState({
+    phase: 'R32',
+    home_team: '',
+    away_team: '',
+    match_date: '',
+    match_time: '',
+    venue: ''
+  })
+
+  useEffect(() => { fetchElim() }, [])
+
+  async function fetchElim() {
+    const { data } = await supabase
+      .from('matches')
+      .select('*')
+      .neq('phase', 'group')
+      .order('match_date')
+    setMatches(data || [])
+    setLoading(false)
+  }
+
+  function handleForm(key, val) {
+    setForm(prev => ({ ...prev, [key]: val }))
+  }
+
+  async function saveMatch(e) {
+    e.preventDefault()
+    if (!form.home_team.trim() || !form.away_team.trim() || !form.match_date || !form.match_time) {
+      setMsg('Completá todos los campos obligatorios'); return
+    }
+    setSaving(true)
+    // Combinar fecha y hora en UTC (el input es hora BsAs GMT-3)
+    const localDT = `${form.match_date}T${form.match_time}:00`
+    const d = new Date(localDT)
+    d.setHours(d.getHours() + 3) // convertir GMT-3 → UTC
+    const { error } = await supabase.from('matches').insert({
+      phase:      form.phase,
+      home_team:  form.home_team.trim(),
+      away_team:  form.away_team.trim(),
+      match_date: d.toISOString(),
+      venue:      form.venue.trim() || null,
+      status:     'upcoming'
+    })
+    if (error) setMsg(error.message)
+    else {
+      setMsg('✓ Partido agregado')
+      setForm({ phase: 'R32', home_team: '', away_team: '', match_date: '', match_time: '', venue: '' })
+      setShowForm(false)
+      await fetchElim()
+    }
+    setSaving(false)
+  }
+
+  async function deleteMatch(id, home, away) {
+    if (!window.confirm(`¿Eliminar el partido ${home} vs ${away}?`)) return
+    await supabase.from('matches').delete().eq('id', id)
+    setMsg('✓ Partido eliminado')
+    await fetchElim()
+  }
+
+  // Agrupar por fase
+  const grouped = {}
+  matches.forEach(m => {
+    const key = PHASES[m.phase] || m.phase
+    if (!grouped[key]) grouped[key] = []
+    grouped[key].push(m)
+  })
+
+  if (loading) return <div className="spinner" />
+
+  return (
+    <>
+      {msg && (
+        <div className={`alert ${msg.startsWith('✓') ? 'alert-success' : 'alert-error'}`} style={{ marginBottom: '12px' }}>
+          {msg}
+          <button onClick={() => setMsg('')} style={{ float: 'right', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}>✕</button>
+        </div>
+      )}
+
+      {/* Formulario nuevo partido */}
+      {showForm ? (
+        <div className="card" style={{ marginBottom: '12px', padding: '16px' }}>
+          <div className="card-header" style={{ margin: '-16px -16px 14px', padding: '10px 16px' }}>
+            Agregar partido eliminatorio
+          </div>
+          <form onSubmit={saveMatch} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div>
+              <label style={{ fontSize: '12px', color: 'var(--gray-400)', marginBottom: '4px', display: 'block' }}>Fase *</label>
+              <select className="input" value={form.phase} onChange={e => handleForm('phase', e.target.value)}>
+                {ELIM_PHASES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+              </select>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              <div>
+                <label style={{ fontSize: '12px', color: 'var(--gray-400)', marginBottom: '4px', display: 'block' }}>Equipo local *</label>
+                <input className="input" placeholder="ej: Argentina" value={form.home_team} onChange={e => handleForm('home_team', e.target.value)} required />
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', color: 'var(--gray-400)', marginBottom: '4px', display: 'block' }}>Equipo visitante *</label>
+                <input className="input" placeholder="ej: Francia" value={form.away_team} onChange={e => handleForm('away_team', e.target.value)} required />
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              <div>
+                <label style={{ fontSize: '12px', color: 'var(--gray-400)', marginBottom: '4px', display: 'block' }}>Fecha * (hora Argentina)</label>
+                <input className="input" type="date" value={form.match_date} onChange={e => handleForm('match_date', e.target.value)} required />
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', color: 'var(--gray-400)', marginBottom: '4px', display: 'block' }}>Hora * (GMT-3)</label>
+                <input className="input" type="time" value={form.match_time} onChange={e => handleForm('match_time', e.target.value)} required />
+              </div>
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', color: 'var(--gray-400)', marginBottom: '4px', display: 'block' }}>Sede (opcional)</label>
+              <input className="input" placeholder="ej: MetLife Stadium, Nueva Jersey" value={form.venue} onChange={e => handleForm('venue', e.target.value)} />
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button className="btn-primary" type="submit" disabled={saving} style={{ flex: 1 }}>
+                {saving ? 'Guardando...' : 'Agregar partido'}
+              </button>
+              <button type="button" onClick={() => setShowForm(false)}
+                style={{ flex: 1, background: 'var(--gray-200)', border: 'none', borderRadius: 'var(--radius-sm)', fontSize: '14px', cursor: 'pointer', color: 'var(--gray-800)' }}>
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : (
+        <button className="btn-primary" onClick={() => setShowForm(true)} style={{ marginBottom: '12px' }}>
+          + Agregar partido eliminatorio
+        </button>
+      )}
+
+      {/* Lista de partidos eliminatorios */}
+      {Object.keys(grouped).length === 0 && (
+        <div className="empty">
+          <div className="empty-icon">📋</div>
+          No hay partidos eliminatorios cargados todavía.
+        </div>
+      )}
+
+      {Object.entries(grouped).map(([phase, phaseMatches]) => (
+        <div key={phase} className="card" style={{ marginBottom: '12px' }}>
+          <div className="group-header">{phase}</div>
+          {phaseMatches.map(m => (
+            <div key={m.id} className="admin-row">
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '13px', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  {flagUrl(m.home_team) && <img src={flagUrl(m.home_team)} width="16" height="12" style={{ borderRadius: '2px' }} alt="" />}
+                  {m.home_team}
+                  <span style={{ color: 'var(--gray-400)', margin: '0 2px' }}>vs</span>
+                  {flagUrl(m.away_team) && <img src={flagUrl(m.away_team)} width="16" height="12" style={{ borderRadius: '2px' }} alt="" />}
+                  {m.away_team}
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--gray-400)' }}>
+                  {formatDate(m.match_date)}{m.venue ? ` — ${m.venue.split(',')[0]}` : ''}
+                </div>
+              </div>
+              {m.status === 'finished'
+                ? <span className="badge badge-green" style={{ fontSize: '11px' }}>{m.home_score}-{m.away_score}</span>
+                : <span className="badge badge-gray" style={{ fontSize: '11px' }}>{m.status === 'live' ? '● En vivo' : 'Pendiente'}</span>
+              }
+              {m.status !== 'finished' && (
+                <button className="btn-sm" style={{ background: 'var(--red)', fontSize: '11px', padding: '4px 8px' }}
+                  onClick={() => deleteMatch(m.id, m.home_team, m.away_team)}>
+                  Eliminar
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      ))}
+    </>
+  )
+}
+
 // ─── Sección: Torneos ─────────────────────────────────────
 function TournamentsTab() {
   const [tournaments, setTournaments] = useState([])
@@ -401,11 +594,15 @@ export default function AdminPage() {
         <button className={`tab-btn ${section === 'torneos' ? 'active' : ''}`} onClick={() => setSection('torneos')}>
           Torneos
         </button>
+        <button className={`tab-btn ${section === 'elim' ? 'active' : ''}`} onClick={() => setSection('elim')}>
+          Fases
+        </button>
       </div>
 
       {section === 'matches' && <MatchesTab profile={profile} />}
       {section === 'users'   && <UsersTab currentProfile={profile} />}
       {section === 'torneos' && <TournamentsTab />}
+      {section === 'elim'    && <EliminatoriosTab />}
     </>
   )
 }
