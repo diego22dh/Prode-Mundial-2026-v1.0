@@ -99,8 +99,9 @@ export default function MatchesPage() {
   async function saveDrafts() {
     setSaving(true)
     let count = 0
+    const tid = activeTournament?.id
+    if (!tid) { setSaving(false); return }
 
-    // Construir las predicciones actualizadas localmente
     const newPredictions = { ...predictions }
 
     for (const [matchId, { home, away }] of Object.entries(drafts)) {
@@ -110,33 +111,37 @@ export default function MatchesPage() {
       let error
 
       if (existing) {
+        // UPDATE filtrando también por tournament_id para no pisar otros torneos
         ;({ error } = await supabase
           .from('predictions')
           .update({ pred_home: home, pred_away: away })
           .eq('user_id', user.id)
-          .eq('match_id', mid))
+          .eq('match_id', mid)
+          .eq('tournament_id', tid))
       } else {
         ;({ error } = await supabase
           .from('predictions')
           .insert({ user_id: user.id, match_id: mid, pred_home: home, pred_away: away, tournament_id: tid }))
       }
 
-      if (!error) {
+      if (error) {
+        console.error('Error guardando predicción:', error)
+      } else {
         count++
-        // Actualizar localmente de inmediato sin esperar fetchAll
         newPredictions[mid] = {
           ...(existing || {}),
           user_id: user.id,
           match_id: mid,
           pred_home: home,
           pred_away: away,
+          tournament_id: tid,
           points: existing?.points ?? 0,
           scored_at: existing?.scored_at ?? null,
         }
       }
     }
 
-    // Primero actualizar el estado local — el usuario ve el nuevo valor al instante
+    // Actualizar estado local inmediatamente
     setPredictions(newPredictions)
     setDrafts({})
     setSavedCount(count)
@@ -144,8 +149,8 @@ export default function MatchesPage() {
     triggerRefresh()
     setSaving(false)
 
-    // Luego sincronizar con la DB en background (sin bloquear la UI)
-    fetchPredictions(user.id).then(pMap => setPredictions(pMap))  // sync background
+    // Sincronizar con DB en background
+    fetchPredictions(user.id).then(pMap => setPredictions(pMap))
   }
 
   const grouped = {}
