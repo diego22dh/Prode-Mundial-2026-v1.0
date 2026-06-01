@@ -273,6 +273,107 @@ function UsersTab({ currentProfile }) {
   )
 }
 
+
+// ─── Sección: Torneos ─────────────────────────────────────
+function TournamentsTab() {
+  const [tournaments, setTournaments] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [busy, setBusy] = useState(null)
+  const [msg, setMsg] = useState('')
+
+  useEffect(() => { fetchTournaments() }, [])
+
+  async function fetchTournaments() {
+    const { data } = await supabase
+      .from('tournaments')
+      .select('*, profiles(username)')
+      .order('created_at')
+    setTournaments(data || [])
+    setLoading(false)
+  }
+
+  async function approve(id, name) {
+    setBusy(id)
+    const { error } = await supabase.from('tournaments').update({ status: 'active' }).eq('id', id)
+    if (error) setMsg(error.message)
+    else setMsg(`✓ Torneo "${name}" aprobado`)
+    await fetchTournaments()
+    setBusy(null)
+  }
+
+  async function reject(id, name) {
+    if (!window.confirm(`¿Rechazar y eliminar el torneo "${name}"?`)) return
+    setBusy(id)
+    await supabase.from('tournaments').delete().eq('id', id)
+    setMsg(`Torneo "${name}" eliminado`)
+    await fetchTournaments()
+    setBusy(null)
+  }
+
+  const pending = tournaments.filter(t => t.status === 'pending')
+  const active  = tournaments.filter(t => t.status === 'active')
+
+  if (loading) return <div className="spinner" />
+
+  return (
+    <>
+      {msg && (
+        <div className={`alert ${msg.startsWith('✓') ? 'alert-success' : 'alert-error'}`} style={{ marginBottom: '12px' }}>
+          {msg}
+          <button onClick={() => setMsg('')} style={{ float:'right', background:'none', border:'none', cursor:'pointer', color:'inherit' }}>✕</button>
+        </div>
+      )}
+
+      {/* Pendientes */}
+      {pending.length > 0 && (
+        <div className="card" style={{ marginBottom: '12px' }}>
+          <div className="card-header">
+            <span>Pendientes de aprobación</span>
+            <span className="badge badge-red">{pending.length}</span>
+          </div>
+          {pending.map(t => (
+            <div key={t.id} style={{ padding: '12px 16px', borderBottom: '1px solid var(--gray-200)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '14px', fontWeight: 600 }}>{t.name}</div>
+                {t.description && <div style={{ fontSize: '12px', color: 'var(--gray-400)' }}>{t.description}</div>}
+                <div style={{ fontSize: '11px', color: 'var(--gray-400)', marginTop: '2px' }}>Solicitado por {t.profiles?.username}</div>
+              </div>
+              <button className="btn-sm" disabled={busy === t.id} onClick={() => approve(t.id, t.name)}>
+                Aprobar
+              </button>
+              <button className="btn-sm" style={{ background: 'var(--red)' }} disabled={busy === t.id} onClick={() => reject(t.id, t.name)}>
+                Rechazar
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Activos */}
+      <div className="card">
+        <div className="card-header">
+          <span>Torneos activos</span>
+          <span style={{ fontSize: '12px', fontFamily: 'inherit', fontWeight: 400 }}>{active.length} torneos</span>
+        </div>
+        {active.length === 0 && <div className="empty">No hay torneos activos.</div>}
+        {active.map(t => (
+          <div key={t.id} style={{ padding: '10px 16px', borderBottom: '1px solid var(--gray-200)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '14px', fontWeight: 500 }}>{t.name}</div>
+              {t.description && <div style={{ fontSize: '12px', color: 'var(--gray-400)' }}>{t.description}</div>}
+              <div style={{ fontSize: '11px', color: 'var(--gray-400)' }}>Creado por {t.profiles?.username}</div>
+            </div>
+            <span className="badge badge-green">Activo</span>
+            <button className="btn-sm" style={{ background: 'var(--red)' }} disabled={busy === t.id} onClick={() => reject(t.id, t.name)}>
+              Eliminar
+            </button>
+          </div>
+        ))}
+      </div>
+    </>
+  )
+}
+
 // ─── Admin principal ──────────────────────────────────────
 export default function AdminPage() {
   const { profile } = useAuth()
@@ -297,10 +398,14 @@ export default function AdminPage() {
         <button className={`tab-btn ${section === 'users' ? 'active' : ''}`} onClick={() => setSection('users')}>
           Usuarios
         </button>
+        <button className={`tab-btn ${section === 'torneos' ? 'active' : ''}`} onClick={() => setSection('torneos')}>
+          Torneos
+        </button>
       </div>
 
       {section === 'matches' && <MatchesTab profile={profile} />}
       {section === 'users'   && <UsersTab currentProfile={profile} />}
+      {section === 'torneos' && <TournamentsTab />}
     </>
   )
 }

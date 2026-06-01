@@ -1,19 +1,21 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+import { useTournament } from '../hooks/useTournament'
 
 export default function LeaderboardPage() {
   const { user } = useAuth()
+  const { activeTournament } = useTournament(user?.id)
   const [rows, setRows] = useState([])
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => { fetchData() }, [])
+  useEffect(() => { if (activeTournament) fetchData() }, [activeTournament])
 
   async function fetchData() {
     const [{ data: lb }, { data: st }] = await Promise.all([
-      supabase.from('leaderboard').select('*').order('position'),
-      supabase.from('predictions').select('points, scored_at').not('scored_at', 'is', null)
+      supabase.from('leaderboard').select('*').eq('tournament_id', activeTournament.id).order('position'),
+      supabase.from('predictions').select('points, scored_at').eq('tournament_id', activeTournament.id).not('scored_at', 'is', null)
     ])
     setRows(lb || [])
     if (st) {
@@ -31,6 +33,13 @@ export default function LeaderboardPage() {
     if (pos === 3) return 'bronze'
     return ''
   }
+
+  if (!activeTournament) return (
+    <div className="empty" style={{ paddingTop: '60px' }}>
+      <div className="empty-icon">🏆</div>
+      <p>Seleccioná un torneo para ver la tabla.</p>
+    </div>
+  )
 
   if (loading) return <div className="spinner" />
 
@@ -57,7 +66,7 @@ export default function LeaderboardPage() {
 
       <div className="card">
         <div className="card-header">
-          <span>Tabla de posiciones</span>
+          <span>Tabla — {activeTournament.name}</span>
           {rows.length > 0 && <span style={{ fontSize: '12px', fontFamily: 'inherit', fontWeight: 400 }}>
             Promedio: {stats?.avgPts} pts
           </span>}

@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { flagUrl } from '../lib/flags'
 import { useRefresh } from '../lib/refreshContext.jsx'
+import { useTournament } from '../hooks/useTournament'
 
 const PHASES = { group:'Fase de grupos', R32:'Ronda 32', R16:'Octavos', QF:'Cuartos', SF:'Semis', '3rd':'3er puesto', F:'Final' }
 
@@ -36,6 +37,7 @@ function Team({ name }) {
 export default function MatchesPage() {
   const { user } = useAuth()
   const { triggerRefresh } = useRefresh()
+  const { activeTournament } = useTournament(user?.id)
   const [matches, setMatches] = useState([])
   const [predictions, setPredictions] = useState({})
   const [drafts, setDrafts] = useState({})
@@ -63,6 +65,7 @@ export default function MatchesPage() {
       .from('predictions')
       .select('*')
       .eq('user_id', userId)
+      .eq('tournament_id', activeTournament?.id ?? -1)
     if (error) console.error('Error predictions:', error)
     const pMap = {}
     ;(data || []).forEach(pr => { pMap[pr.match_id] = pr })
@@ -115,7 +118,7 @@ export default function MatchesPage() {
       } else {
         ;({ error } = await supabase
           .from('predictions')
-          .insert({ user_id: user.id, match_id: mid, pred_home: home, pred_away: away }))
+          .insert({ user_id: user.id, match_id: mid, pred_home: home, pred_away: away, tournament_id: tid }))
       }
 
       if (!error) {
@@ -142,7 +145,7 @@ export default function MatchesPage() {
     setSaving(false)
 
     // Luego sincronizar con la DB en background (sin bloquear la UI)
-    fetchPredictions(user.id).then(pMap => setPredictions(pMap))
+    fetchPredictions(user.id).then(pMap => setPredictions(pMap))  // sync background
   }
 
   const grouped = {}
@@ -156,6 +159,14 @@ export default function MatchesPage() {
   })
 
   if (loading) return <div className="spinner" />
+
+  if (!activeTournament) return (
+    <div className="empty" style={{ paddingTop: '60px' }}>
+      <div className="empty-icon">🏆</div>
+      <p>Seleccioná un torneo para ver los partidos.</p>
+      <p style={{ fontSize: '12px', marginTop: '6px' }}>Ir a la pestaña <strong>Torneos</strong></p>
+    </div>
+  )
 
   return (
     <>
