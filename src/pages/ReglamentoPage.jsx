@@ -61,6 +61,31 @@ export default function ReglamentoPage() {
         ))}
       </div>
 
+      {/* Puntos eliminatorias */}
+      <div className="card" style={{ marginBottom: '12px' }}>
+        <div className="card-header">🔴 Puntos en fases eliminatorias</div>
+        <div style={{ padding: '10px 16px 4px', fontSize: '12px', color: 'var(--gray-400)' }}>
+          Se pronostica el resultado a <strong>90 minutos</strong>. Si pronosticás empate, aparece un selector para elegir quién clasifica.
+        </div>
+        {[
+          { pts: 4, label: 'Exacto + clasificado', eg: 'Pronosticás 1-1, clasifica Brasil → sale 1-1, clasifica Brasil' },
+          { pts: 3, label: 'Exacto sin empate / Ganador+gol+clasificado', eg: 'Pronosticás 2-1 → sale 2-1 · o 1-1 clf correcto + un gol' },
+          { pts: 2, label: 'Ganador+gol / Empate+clasificado', eg: 'Pronosticás 2-0 → sale 3-0 · o empate clf correcto sin gol' },
+          { pts: 1, label: 'Solo ganador / Solo empate', eg: 'Acertás quién gana o que empata, sin goles ni clasificado' },
+          { pts: 0, label: 'Sin acierto', eg: 'No acertás el resultado de 90 minutos' },
+        ].map(({ pts, label, eg }) => (
+          <div key={pts} style={{ display: 'flex', gap: '14px', padding: '10px 16px', borderBottom: '1px solid var(--gray-100)', alignItems: 'flex-start' }}>
+            <div className={`pts-chip pts-${Math.min(pts,3)}`} style={{ minWidth: '36px', height: '36px', fontSize: pts === 4 ? '16px' : '20px', flexShrink: 0 }}>{pts}</div>
+            <div>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--gray-800)', marginBottom: '3px' }}>{label}</div>
+              <div style={{ fontSize: '12px', color: 'var(--gray-400)', background: 'var(--gray-50)', padding: '4px 8px', borderRadius: '6px', display: 'inline-block' }}>
+                Ejemplo: {eg}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* Cierre de pronósticos */}
       <div className="card" style={{ marginBottom: '12px' }}>
         <div className="card-header">⏱ Cierre de pronósticos</div>

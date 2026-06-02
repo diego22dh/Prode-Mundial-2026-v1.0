@@ -90,6 +90,10 @@ export default function MatchesPage() {
   }, [user, activeTournament, fetchMatches, fetchPredictions])
 
   function handleDraft(matchId, side, val) {
+    if (side === 'classifier') {
+      setDrafts(prev => ({ ...prev, [matchId]: { ...prev[matchId], classifier: val } }))
+      return
+    }
     const num = val === '' ? '' : Math.max(0, Math.min(20, parseInt(val) || 0))
     setDrafts(prev => ({
       ...prev,
@@ -115,14 +119,14 @@ export default function MatchesPage() {
         // UPDATE filtrando también por tournament_id para no pisar otros torneos
         ;({ error } = await supabase
           .from('predictions')
-          .update({ pred_home: home, pred_away: away })
+          .update({ pred_home: home, pred_away: away, pred_classifier: classifier })
           .eq('user_id', user.id)
           .eq('match_id', mid)
           .eq('tournament_id', tid))
       } else {
         ;({ error } = await supabase
           .from('predictions')
-          .insert({ user_id: user.id, match_id: mid, pred_home: home, pred_away: away, tournament_id: tid }))
+          .insert({ user_id: user.id, match_id: mid, pred_home: home, pred_away: away, tournament_id: tid, pred_classifier: classifier }))
       }
 
       if (error) {
@@ -241,30 +245,56 @@ export default function MatchesPage() {
                   )
 
                 ) : (
-                  <div className="score-inputs">
-                    <input
-                      className="score-input"
-                      type="number" min="0" max="20"
-                      value={draft?.home !== undefined ? draft.home : hasSaved ? pred.pred_home : ''}
-                      onChange={e => handleDraft(match.id, 'home', e.target.value)}
-                      style={isEditing
-                        ? { borderColor: 'var(--green)', background: 'var(--green-light)' }
-                        : hasSaved
-                          ? { borderColor: 'var(--green)', background: 'var(--green-light)', fontWeight: 700 }
-                          : {}}
-                    />
-                    <span className="score-sep">-</span>
-                    <input
-                      className="score-input"
-                      type="number" min="0" max="20"
-                      value={draft?.away !== undefined ? draft.away : hasSaved ? pred.pred_away : ''}
-                      onChange={e => handleDraft(match.id, 'away', e.target.value)}
-                      style={isEditing
-                        ? { borderColor: 'var(--green)', background: 'var(--green-light)' }
-                        : hasSaved
-                          ? { borderColor: 'var(--green)', background: 'var(--green-light)', fontWeight: 700 }
-                          : {}}
-                    />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-end' }}>
+                    <div className="score-inputs">
+                      <input
+                        className="score-input"
+                        type="number" min="0" max="20"
+                        value={draft?.home !== undefined ? draft.home : hasSaved ? pred.pred_home : ''}
+                        onChange={e => handleDraft(match.id, 'home', e.target.value)}
+                        style={isEditing
+                          ? { borderColor: 'var(--green)', background: 'var(--green-light)' }
+                          : hasSaved
+                            ? { borderColor: 'var(--green)', background: 'var(--green-light)', fontWeight: 700 }
+                            : {}}
+                      />
+                      <span className="score-sep">-</span>
+                      <input
+                        className="score-input"
+                        type="number" min="0" max="20"
+                        value={draft?.away !== undefined ? draft.away : hasSaved ? pred.pred_away : ''}
+                        onChange={e => handleDraft(match.id, 'away', e.target.value)}
+                        style={isEditing
+                          ? { borderColor: 'var(--green)', background: 'var(--green-light)' }
+                          : hasSaved
+                            ? { borderColor: 'var(--green)', background: 'var(--green-light)', fontWeight: 700 }
+                            : {}}
+                      />
+                    </div>
+                    {/* Selector de clasificado: solo en KO cuando el pronóstico es empate */}
+                    {match.phase !== 'group' && (() => {
+                      const h = draft?.home !== undefined ? draft.home : hasSaved ? pred.pred_home : null
+                      const a = draft?.away !== undefined ? draft.away : hasSaved ? pred.pred_away : null
+                      const showclf = h !== null && a !== null && h !== '' && a !== '' && Number(h) === Number(a)
+                      if (!showclf) return null
+                      const savedClf = draft?.classifier ?? pred?.pred_classifier ?? ''
+                      return (
+                        <select
+                          style={{
+                            fontSize: '11px', padding: '3px 6px',
+                            border: '1px solid #7c3aed', borderRadius: '6px',
+                            background: '#ede9fe', color: '#5b21b6',
+                            cursor: 'pointer', maxWidth: '140px'
+                          }}
+                          value={savedClf}
+                          onChange={e => handleDraft(match.id, 'classifier', e.target.value)}
+                        >
+                          <option value="">¿Quién clasifica?</option>
+                          <option value={match.home_team}>{match.home_team}</option>
+                          <option value={match.away_team}>{match.away_team}</option>
+                        </select>
+                      )
+                    })()}
                   </div>
                 )}
 
