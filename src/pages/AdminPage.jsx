@@ -35,6 +35,10 @@ function MatchesTab({ profile }) {
   }
 
   function handleScore(matchId, side, val) {
+    if (side === 'classifier') {
+      setScores(prev => ({ ...prev, [matchId]: { ...prev[matchId], classifier: val } }))
+      return
+    }
     const num = val === '' ? '' : Math.max(0, Math.min(30, parseInt(val) || 0))
     setScores(prev => ({ ...prev, [matchId]: { ...prev[matchId], [side]: num } }))
   }
@@ -45,12 +49,22 @@ function MatchesTab({ profile }) {
       setMsg('Completá ambos scores'); return
     }
     setProcessing(matchId)
+    const isKO = ['R32','R16','QF','SF','3rd','F'].includes(
+      matches.find(m => m.id === matchId)?.phase
+    )
+    const isDraw = s.home === s.away
+    const updateData = {
+      home_score: s.home,
+      away_score: s.away,
+      status: 'finished',
+      ...(isKO && isDraw && s.classifier ? { classifier: s.classifier } : {})
+    }
     const { error: e1 } = await supabase
       .from('matches')
-      .update({ home_score: s.home, away_score: s.away, status: 'finished' })
+      .update(updateData)
       .eq('id', matchId)
     if (e1) { setMsg(e1.message); setProcessing(null); return }
-    const { data, error: e2 } = await supabase.rpc('score_match', { p_match_id: matchId })
+    const { data, error: e2 } = await supabase.rpc('score_match_safe', { p_match_id: matchId })
     if (e2) setMsg(e2.message)
     else setMsg(`✓ Resultado guardado. ${data} pronósticos puntuados.`)
     setScores(prev => { const n = {...prev}; delete n[matchId]; return n })
@@ -130,6 +144,23 @@ function MatchesTab({ profile }) {
                   <span style={{ color: 'var(--gray-400)' }}>-</span>
                   <input className="admin-score-input" type="number" min="0" max="30" placeholder="V"
                     value={scores[m.id]?.away ?? ''} onChange={e => handleScore(m.id, 'away', e.target.value)} />
+                  {/* Clasificado: solo en KO cuando empate */}
+                  {m.phase !== 'group' &&
+                   scores[m.id]?.home !== undefined &&
+                   scores[m.id]?.away !== undefined &&
+                   scores[m.id]?.home !== '' &&
+                   scores[m.id]?.away !== '' &&
+                   Number(scores[m.id]?.home) === Number(scores[m.id]?.away) && (
+                    <select
+                      style={{ fontSize: '11px', padding: '3px 6px', border: '1px solid #7c3aed', borderRadius: '6px', background: '#ede9fe', color: '#5b21b6' }}
+                      value={scores[m.id]?.classifier ?? ''}
+                      onChange={e => handleScore(m.id, 'classifier', e.target.value)}
+                    >
+                      <option value="">Clasificado</option>
+                      <option value={m.home_team}>{m.home_team}</option>
+                      <option value={m.away_team}>{m.away_team}</option>
+                    </select>
+                  )}
                   <button className="btn-sm" disabled={processing === m.id} onClick={() => saveResult(m.id)}>
                     {processing === m.id ? '...' : 'Guardar'}
                   </button>
@@ -186,14 +217,15 @@ function UsersTab({ currentProfile }) {
 
   async function deleteUser(userId, username) {
     if (userId === currentProfile?.id) { setMsg('No podés eliminarte a vos mismo'); return }
-    if (!window.confirm(`¿Eliminar al usuario "${username}"? Se borrarán también todos sus pronósticos.`)) return
+    if (!window.confirm(`¿Eliminar al usuario "${username}"?\nSe borrarán su perfil y todos sus pronósticos.\nNota: la cuenta de acceso (email) queda inhabilitada pero debe eliminarse manualmente desde Supabase > Authentication > Users.`)) return
     setSaving(true)
-    // Borrar predicciones primero
+    // Borrar predicciones y membresías
     await supabase.from('predictions').delete().eq('user_id', userId)
-    // Borrar perfil (cascade borra el auth.user por el FK)
+    await supabase.from('tournament_members').delete().eq('user_id', userId)
+    // Borrar perfil — el FK ON DELETE CASCADE limpia datos relacionados
     const { error } = await supabase.from('profiles').delete().eq('id', userId)
     if (error) setMsg(error.message)
-    else setMsg(`✓ Usuario "${username}" eliminado`)
+    else setMsg(`✓ Perfil de "${username}" eliminado. Eliminá la cuenta en Supabase > Auth > Users si es necesario.`)
     await fetchUsers()
     setSaving(false)
   }
