@@ -167,7 +167,7 @@ export default function ReglamentoPage() {
         <div style={{ padding: '14px 16px' }}>
           <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--gray-800)', marginBottom: '4px' }}>Fases eliminatorias</div>
           <div style={{ fontSize: '13px', color: 'var(--gray-600)' }}>
-            Los partidos de Ronda de 32, Octavos, Cuartos, Semifinal y Final se van habilitando
+            Los partidos de Ronda de 16, Octavos, Cuartos, Semifinal y Final se van habilitando
             a medida que se definen los cruces. El administrador los carga una vez conocidos los clasificados.
           </div>
         </div>
