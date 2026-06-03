@@ -5,7 +5,7 @@ import { flagUrl } from '../lib/flags'
 import { useRefresh } from '../lib/refreshContext.jsx'
 import { useTournament } from '../hooks/useTournament'
 
-const PHASES = { group:'Fase de grupos', R32:'Ronda 32', R16:'Octavos', QF:'Cuartos', SF:'Semis', '3rd':'3er puesto', F:'Final' }
+const PHASES = { group:'Fase de grupos', R32:'Ronda de 16', R16:'Octavos', QF:'Cuartos', SF:'Semis', '3rd':'3er puesto', F:'Final' }
 
 function formatDate(iso) {
   const d = new Date(iso)
@@ -106,13 +106,16 @@ export default function MatchesPage() {
     let count = 0
     const tid = activeTournament?.id
     if (!tid) { setSaving(false); return }
+    try {
 
     const newPredictions = { ...predictions }
 
-    for (const [matchId, { home, away }] of Object.entries(drafts)) {
+    for (const [matchId, draftVal] of Object.entries(drafts)) {
+      const { home, away } = draftVal
       if (home === '' || away === '' || home === undefined || away === undefined) continue
       const mid = parseInt(matchId)
       const existing = predictions[mid]
+      const classifier = draftVal?.classifier ?? null
       let error
 
       if (existing) {
@@ -156,6 +159,10 @@ export default function MatchesPage() {
 
     // Sincronizar con DB en background
     fetchPredictions(user.id, activeTournament?.id).then(pMap => setPredictions(pMap))
+    } catch (err) {
+      console.error('Error en saveDrafts:', err)
+      setSaving(false)
+    }
   }
 
   const grouped = {}

@@ -4,7 +4,7 @@ import { flagUrl } from '../lib/flags'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 
-const PHASES = { group:'Fase de grupos', R32:'Ronda 32', R16:'Octavos', QF:'Cuartos', SF:'Semis', '3rd':'3er puesto', F:'Final' }
+const PHASES = { group:'Fase de grupos', R32:'Ronda de 16', R16:'Octavos', QF:'Cuartos', SF:'Semis', '3rd':'3er puesto', F:'Final' }
 
 function formatDate(iso) {
   const d = new Date(iso)
@@ -308,8 +308,36 @@ function UsersTab({ currentProfile }) {
 
 
 // ─── Sección: Partidos eliminatorios ─────────────────────
+
+const ALL_TEAMS = [
+  // Grupo A
+  'México', 'Sudáfrica', 'Corea del Sur', 'Rep. Checa',
+  // Grupo B
+  'Canadá', 'Bosnia y Herz.', 'Qatar', 'Suiza',
+  // Grupo C
+  'Brasil', 'Marruecos', 'Haití', 'Escocia',
+  // Grupo D
+  'Estados Unidos', 'Paraguay', 'Australia', 'Turquía',
+  // Grupo E
+  'Alemania', 'Curazao', 'Costa de Marfil', 'Ecuador',
+  // Grupo F
+  'Países Bajos', 'Japón', 'Suecia', 'Túnez',
+  // Grupo G
+  'Bélgica', 'Egipto', 'Irán', 'Nueva Zelanda',
+  // Grupo H
+  'España', 'Cabo Verde', 'Arabia Saudita', 'Uruguay',
+  // Grupo I
+  'Francia', 'Senegal', 'Irak', 'Noruega',
+  // Grupo J
+  'Argentina', 'Argelia', 'Austria', 'Jordania',
+  // Grupo K
+  'Portugal', 'RD del Congo', 'Uzbekistán', 'Colombia',
+  // Grupo L
+  'Inglaterra', 'Croacia', 'Ghana', 'Panamá',
+].sort((a, b) => a.localeCompare(b, 'es'))
+
 const ELIM_PHASES = [
-  { value: 'R32', label: 'Ronda de 32' },
+  { value: 'R32', label: 'Ronda de 16' },
   { value: 'R16', label: 'Octavos de final' },
   { value: 'QF',  label: 'Cuartos de final' },
   { value: 'SF',  label: 'Semifinal' },
@@ -418,11 +446,17 @@ function EliminatoriosTab() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
               <div>
                 <label style={{ fontSize: '12px', color: 'var(--gray-400)', marginBottom: '4px', display: 'block' }}>Equipo local *</label>
-                <input className="input" placeholder="ej: Argentina" value={form.home_team} onChange={e => handleForm('home_team', e.target.value)} required />
+                <select className="input" value={form.home_team} onChange={e => handleForm('home_team', e.target.value)} required>
+                  <option value="">Seleccionar...</option>
+                  {ALL_TEAMS.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
               </div>
               <div>
                 <label style={{ fontSize: '12px', color: 'var(--gray-400)', marginBottom: '4px', display: 'block' }}>Equipo visitante *</label>
-                <input className="input" placeholder="ej: Francia" value={form.away_team} onChange={e => handleForm('away_team', e.target.value)} required />
+                <select className="input" value={form.away_team} onChange={e => handleForm('away_team', e.target.value)} required>
+                  <option value="">Seleccionar...</option>
+                  {ALL_TEAMS.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
