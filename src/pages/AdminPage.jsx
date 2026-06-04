@@ -48,16 +48,23 @@ function MatchesTab({ profile }) {
     if (s?.home === '' || s?.away === '' || s?.home === undefined || s?.away === undefined) {
       setMsg('Completá ambos scores'); return
     }
+    const match = matches.find(m => m.id === matchId)
+    const isKO  = match && match.phase !== 'group'
+    const homeN = parseInt(s.home)
+    const awayN = parseInt(s.away)
+    const isDraw = homeN === awayN
+
+    // En KO con empate, el clasificado es obligatorio
+    if (isKO && isDraw && !s.classifier) {
+      setMsg('Es eliminatoria con empate: seleccioná quién clasificó'); return
+    }
+
     setProcessing(matchId)
-    const isKO = ['R32','R16','QF','SF','3rd','F'].includes(
-      matches.find(m => m.id === matchId)?.phase
-    )
-    const isDraw = s.home === s.away
     const updateData = {
-      home_score: s.home,
-      away_score: s.away,
+      home_score: homeN,
+      away_score: awayN,
       status: 'finished',
-      ...(isKO && isDraw && s.classifier ? { classifier: s.classifier } : {})
+      classifier: isKO && isDraw ? s.classifier : null
     }
     const { error: e1 } = await supabase
       .from('matches')
@@ -125,8 +132,13 @@ function MatchesTab({ profile }) {
                 <div style={{ fontSize: '11px', color: 'var(--gray-400)' }}>{formatDate(m.match_date)}</div>
               </div>
               {m.status === 'finished' ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                   <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '18px' }}>{m.home_score}-{m.away_score}</span>
+                  {m.phase !== 'group' && m.home_score === m.away_score && m.classifier && (
+                    <span style={{ fontSize: '11px', background: '#ede9fe', color: '#5b21b6', border: '1px solid #7c3aed', borderRadius: '4px', padding: '1px 6px' }}>
+                      Clasifica: {m.classifier}
+                    </span>
+                  )}
                   <span className="badge badge-green" style={{ fontSize: '10px' }}>Final</span>
                   <button className="btn-sm" style={{ background: 'var(--red)', fontSize: '11px', padding: '4px 8px' }}
                     disabled={processing === m.id} onClick={() => resetResult(m.id)}>Reset</button>
@@ -144,15 +156,16 @@ function MatchesTab({ profile }) {
                   <span style={{ color: 'var(--gray-400)' }}>-</span>
                   <input className="admin-score-input" type="number" min="0" max="30" placeholder="V"
                     value={scores[m.id]?.away ?? ''} onChange={e => handleScore(m.id, 'away', e.target.value)} />
-                  {/* Clasificado: solo en KO cuando empate */}
+                  {/* Clasificado: obligatorio en KO con empate */}
                   {m.phase !== 'group' &&
                    scores[m.id]?.home !== undefined &&
                    scores[m.id]?.away !== undefined &&
                    scores[m.id]?.home !== '' &&
                    scores[m.id]?.away !== '' &&
-                   Number(scores[m.id]?.home) === Number(scores[m.id]?.away) && (
+                   parseInt(scores[m.id]?.home) === parseInt(scores[m.id]?.away) && (
                     <select
-                      style={{ fontSize: '11px', padding: '3px 6px', border: '1px solid #7c3aed', borderRadius: '6px', background: '#ede9fe', color: '#5b21b6' }}
+                      style={{ fontSize: '11px', padding: '3px 6px', borderRadius: '6px', background: '#ede9fe', color: '#5b21b6',
+                        border: scores[m.id]?.classifier ? '1px solid #7c3aed' : '2px solid var(--red)' }}
                       value={scores[m.id]?.classifier ?? ''}
                       onChange={e => handleScore(m.id, 'classifier', e.target.value)}
                     >
