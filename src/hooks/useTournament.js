@@ -10,7 +10,7 @@ export function useTournament(userId) {
   const [loading, setLoading] = useState(true)
 
   const fetchAll = useCallback(async () => {
-    if (!userId) return
+    if (!userId) { setLoading(false); return }
     setLoading(true)
     const [{ data: t }, { data: m }] = await Promise.all([
       supabase.from('tournaments').select('*, profiles(username)').order('created_at'),
@@ -21,7 +21,9 @@ export function useTournament(userId) {
     setLoading(false)
   }, [userId])
 
-  useEffect(() => { fetchAll() }, [fetchAll])
+  useEffect(() => {
+    fetchAll()
+  }, [fetchAll])
 
   function setActiveTournament(t) {
     setActiveTournamentState(t)

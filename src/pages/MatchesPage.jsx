@@ -71,21 +71,26 @@ export default function MatchesPage() {
     return pMap
   }, [])
 
+  const activeTournamentId = activeTournament?.id
+
   useEffect(() => {
     if (user === undefined) return
-    if (!activeTournament?.id) return
+    if (!activeTournamentId) return
+    let cancelled = false
     async function load() {
       setLoading(true)
       const [m, pMap] = await Promise.all([
         fetchMatches(),
-        fetchPredictions(user?.id, activeTournament.id)
+        fetchPredictions(user?.id, activeTournamentId)
       ])
+      if (cancelled) return
       setMatches(m)
       setPredictions(pMap)
       setLoading(false)
     }
     load()
-  }, [user, activeTournament, fetchMatches, fetchPredictions])
+    return () => { cancelled = true }
+  }, [user?.id, activeTournamentId, fetchMatches, fetchPredictions])
 
   function handleDraft(matchId, side, val) {
     if (side === 'classifier') {
