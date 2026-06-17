@@ -44,6 +44,7 @@ export default function MatchesPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [savedCount, setSavedCount] = useState(0)
+  const [saveError, setSaveError] = useState(null)
   const [tab, setTab] = useState('upcoming')
 
   const hasDrafts = Object.keys(drafts).length > 0
@@ -104,6 +105,7 @@ export default function MatchesPage() {
   async function saveDrafts() {
     setSaving(true)
     let count = 0
+    let lastError = null
     const tid = activeTournament?.id
     if (!tid) { setSaving(false); return }
     try {
@@ -118,22 +120,32 @@ export default function MatchesPage() {
       const classifier = draftVal?.classifier ?? null
       let error
 
+      console.log('Intentando guardar:', { mid, home, away, tid, existing: !!existing, userId: user.id })
+
       if (existing) {
         // UPDATE filtrando también por tournament_id para no pisar otros torneos
-        ;({ error } = await supabase
+        const result = await supabase
           .from('predictions')
           .update({ pred_home: home, pred_away: away, pred_classifier: classifier })
           .eq('user_id', user.id)
           .eq('match_id', mid)
-          .eq('tournament_id', tid))
+          .eq('tournament_id', tid)
+          .select()
+        error = result.error
+        console.log('Resultado UPDATE:', result)
       } else {
-        ;({ error } = await supabase
+        const result = await supabase
           .from('predictions')
-          .insert({ user_id: user.id, match_id: mid, pred_home: home, pred_away: away, tournament_id: tid, pred_classifier: classifier }))
+          .insert({ user_id: user.id, match_id: mid, pred_home: home, pred_away: away, tournament_id: tid, pred_classifier: classifier })
+          .select()
+        error = result.error
+        console.log('Resultado INSERT:', result)
       }
 
       if (error) {
         console.error('Error guardando predicción:', error)
+        lastError = error
+
       } else {
         count++
         newPredictions[mid] = {
@@ -153,7 +165,11 @@ export default function MatchesPage() {
     setPredictions(newPredictions)
     setDrafts({})
     setSavedCount(count)
-    setTimeout(() => setSavedCount(0), 3000)
+    if (lastError) {
+      setSaveError(`Error: ${lastError.message || lastError.code || JSON.stringify(lastError)}`)
+    } else {
+      setTimeout(() => setSavedCount(0), 3000)
+    }
     triggerRefresh()
     setSaving(false)
 
@@ -327,6 +343,12 @@ export default function MatchesPage() {
         <div className="save-bar" style={{ background: 'var(--green-dark)' }}>
           <span>✓ {savedCount} pronóstico(s) guardados</span>
           <span />
+        </div>
+      )}
+      {saveError && (
+        <div className="save-bar" style={{ background: 'var(--red)' }}>
+          <span style={{ fontSize: '12px' }}>{saveError}</span>
+          <button onClick={() => setSaveError(null)}>✕</button>
         </div>
       )}
     </>
