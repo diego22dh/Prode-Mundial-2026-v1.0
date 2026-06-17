@@ -107,7 +107,13 @@ export default function MatchesPage() {
     let count = 0
     let lastError = null
     const tid = activeTournament?.id
-    if (!tid) { setSaving(false); return }
+    console.log('saveDrafts INICIO — activeTournament:', activeTournament, 'tid:', tid, 'drafts:', drafts)
+    if (!tid) {
+      console.error('saveDrafts ABORTADO — no hay torneo activo')
+      setSaveError('No hay torneo activo seleccionado')
+      setSaving(false)
+      return
+    }
     try {
 
     const newPredictions = { ...predictions }
