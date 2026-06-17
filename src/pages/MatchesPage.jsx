@@ -74,29 +74,22 @@ export default function MatchesPage() {
   const activeTournamentId = activeTournament?.id
 
   useEffect(() => {
-    console.log('[DIAG] useEffect disparado. user?.id:', user?.id, 'activeTournamentId:', activeTournamentId)
-    if (!user?.id) { console.log('[DIAG] return — no hay user.id'); return }
-    if (!activeTournamentId) { console.log('[DIAG] return — no hay activeTournamentId'); return }
+    if (!user?.id) return
+    if (!activeTournamentId) { setLoading(false); return }
     let cancelled = false
     async function load() {
-      console.log('[DIAG] load() iniciado')
       setLoading(true)
       const [m, pMap] = await Promise.all([
         fetchMatches(),
         fetchPredictions(user.id, activeTournamentId)
       ])
-      console.log('[DIAG] Promise.all resuelto. matches:', m.length, 'predictions:', Object.keys(pMap).length, 'cancelled:', cancelled)
-      if (cancelled) { console.log('[DIAG] cancelado, no actualizo estado'); return }
+      if (cancelled) return
       setMatches(m)
       setPredictions(pMap)
       setLoading(false)
-      console.log('[DIAG] setLoading(false) ejecutado')
     }
     load()
-    return () => {
-      console.log('[DIAG] CLEANUP ejecutado — cancelled = true')
-      cancelled = true
-    }
+    return () => { cancelled = true }
   }, [user?.id, activeTournamentId, fetchMatches, fetchPredictions])
 
   function handleDraft(matchId, side, val) {
@@ -112,6 +105,7 @@ export default function MatchesPage() {
   }
 
   async function saveDrafts() {
+    console.log('[DIAG2] saveDrafts() llamado. drafts:', drafts)
     setSaving(true)
     let count = 0
     let lastError = null
@@ -196,8 +190,6 @@ export default function MatchesPage() {
     grouped[key].push(m)
   })
 
-  if (loading) return <div className="spinner" />
-
   if (!activeTournament) return (
     <div className="empty" style={{ paddingTop: '60px' }}>
       <div className="empty-icon">🏆</div>
@@ -205,6 +197,8 @@ export default function MatchesPage() {
       <p style={{ fontSize: '12px', marginTop: '6px' }}>Ir a la pestaña <strong>Torneos</strong></p>
     </div>
   )
+
+  if (loading) return <div className="spinner" />
 
   return (
     <>
