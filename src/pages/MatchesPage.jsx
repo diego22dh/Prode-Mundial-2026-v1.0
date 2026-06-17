@@ -74,22 +74,29 @@ export default function MatchesPage() {
   const activeTournamentId = activeTournament?.id
 
   useEffect(() => {
-    if (user === undefined) return
-    if (!activeTournamentId) return
+    console.log('[DIAG] useEffect disparado. user?.id:', user?.id, 'activeTournamentId:', activeTournamentId)
+    if (!user?.id) { console.log('[DIAG] return — no hay user.id'); return }
+    if (!activeTournamentId) { console.log('[DIAG] return — no hay activeTournamentId'); return }
     let cancelled = false
     async function load() {
+      console.log('[DIAG] load() iniciado')
       setLoading(true)
       const [m, pMap] = await Promise.all([
         fetchMatches(),
-        fetchPredictions(user?.id, activeTournamentId)
+        fetchPredictions(user.id, activeTournamentId)
       ])
-      if (cancelled) return
+      console.log('[DIAG] Promise.all resuelto. matches:', m.length, 'predictions:', Object.keys(pMap).length, 'cancelled:', cancelled)
+      if (cancelled) { console.log('[DIAG] cancelado, no actualizo estado'); return }
       setMatches(m)
       setPredictions(pMap)
       setLoading(false)
+      console.log('[DIAG] setLoading(false) ejecutado')
     }
     load()
-    return () => { cancelled = true }
+    return () => {
+      console.log('[DIAG] CLEANUP ejecutado — cancelled = true')
+      cancelled = true
+    }
   }, [user?.id, activeTournamentId, fetchMatches, fetchPredictions])
 
   function handleDraft(matchId, side, val) {
