@@ -98,14 +98,23 @@ export default function MatchesPage() {
       return
     }
     const num = val === '' ? '' : Math.max(0, Math.min(20, parseInt(val) || 0))
-    setDrafts(prev => ({
-      ...prev,
-      [matchId]: { ...prev[matchId], [side]: num }
-    }))
+    const existing = predictions[matchId]
+    setDrafts(prev => {
+      const prevDraft = prev[matchId] || {}
+      // Si el draft no tiene el otro lado todavía, lo completamos
+      // con el valor ya guardado (si existe) para no perderlo al guardar
+      const otherSide = side === 'home' ? 'away' : 'home'
+      const otherVal = prevDraft[otherSide] !== undefined
+        ? prevDraft[otherSide]
+        : (existing ? existing[`pred_${otherSide}`] : undefined)
+      return {
+        ...prev,
+        [matchId]: { ...prevDraft, [side]: num, [otherSide]: otherVal }
+      }
+    })
   }
 
   async function saveDrafts() {
-    console.log('[DIAG2] saveDrafts() llamado. drafts:', drafts)
     setSaving(true)
     let count = 0
     let lastError = null
