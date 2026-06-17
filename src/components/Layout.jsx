@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
+import { useAuth } from '../lib/authContext.jsx'
 import { useDarkMode } from '../hooks/useDarkMode'
 import { useNextMatch } from '../hooks/useNextMatch'
 import { flagUrl } from '../lib/flags'
@@ -109,7 +109,6 @@ export default function Layout() {
   return (
     <>
       <header className="topbar" style={{ flexDirection: 'column', height: 'auto', padding: 0 }}>
-        {/* Main bar */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', height: '56px', width: '100%' }}>
           <div>
             <div className="topbar-title">⚽ Mundial 2026</div>
@@ -121,7 +120,6 @@ export default function Layout() {
                 Admin
               </button>
             )}
-            {/* Dark mode toggle */}
             <button
               onClick={() => setDark(d => !d)}
               style={{ background: 'rgba(255,255,255,.15)', border: 'none', color: '#fff', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
@@ -133,7 +131,6 @@ export default function Layout() {
             <button className="btn-logout" onClick={signOut}>Salir</button>
           </div>
         </div>
-        {/* Next match banner */}
         <NextMatchBanner userId={user?.id} />
       </header>
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { useAuth } from '../hooks/useAuth'
+import { useAuth } from '../lib/authContext.jsx'
 
 export default function ProfilePage() {
   const { user, profile } = useAuth()
@@ -90,7 +90,6 @@ export default function ProfilePage() {
         </form>
       </div>
 
-      {/* Points legend */}
       <div className="card" style={{ marginTop: '12px' }}>
         <div className="card-header">Sistema de puntos</div>
         {[

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import { useAuth } from '../hooks/useAuth'
+import { useAuth } from '../lib/authContext.jsx'
 import { flagUrl } from '../lib/flags'
 import { useRefresh } from '../lib/refreshContext.jsx'
 import { useTournament } from '../hooks/useTournament'
@@ -44,11 +44,11 @@ export default function MatchesPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [savedCount, setSavedCount] = useState(0)
+  const [saveError, setSaveError] = useState(null)
   const [tab, setTab] = useState('upcoming')
 
   const hasDrafts = Object.keys(drafts).length > 0
 
-  // Fetch matches (público, sin depender de user)
   const fetchMatches = useCallback(async () => {
     const { data, error } = await supabase
       .from('matches')
@@ -58,7 +58,6 @@ export default function MatchesPage() {
     return data || []
   }, [])
 
-  // Fetch predictions del usuario — recibe tournamentId como parámetro
   const fetchPredictions = useCallback(async (userId, tournamentId) => {
     if (!userId || !tournamentId) return {}
     const { data, error } = await supabase
@@ -72,10 +71,9 @@ export default function MatchesPage() {
     return pMap
   }, [])
 
-  // Carga inicial — espera a que user y activeTournament estén disponibles
   useEffect(() => {
-    if (user === undefined) return  // auth todavía cargando
-    if (!activeTournament?.id) return  // torneo todavía no seleccionado
+    if (user === undefined) return
+    if (!activeTournament?.id) return
     async function load() {
       setLoading(true)
       const [m, pMap] = await Promise.all([
@@ -104,63 +102,74 @@ export default function MatchesPage() {
   async function saveDrafts() {
     setSaving(true)
     let count = 0
+    let lastError = null
     const tid = activeTournament?.id
-    if (!tid) { setSaving(false); return }
+    if (!tid) {
+      setSaveError('No hay torneo activo seleccionado')
+      setSaving(false)
+      return
+    }
     try {
+      const newPredictions = { ...predictions }
 
-    const newPredictions = { ...predictions }
+      for (const [matchId, draftVal] of Object.entries(drafts)) {
+        const { home, away } = draftVal
+        if (home === '' || away === '' || home === undefined || away === undefined) continue
+        const mid = parseInt(matchId)
+        const existing = predictions[mid]
+        const classifier = draftVal?.classifier ?? null
+        let error
 
-    for (const [matchId, draftVal] of Object.entries(drafts)) {
-      const { home, away } = draftVal
-      if (home === '' || away === '' || home === undefined || away === undefined) continue
-      const mid = parseInt(matchId)
-      const existing = predictions[mid]
-      const classifier = draftVal?.classifier ?? null
-      let error
+        if (existing) {
+          const result = await supabase
+            .from('predictions')
+            .update({ pred_home: home, pred_away: away, pred_classifier: classifier })
+            .eq('user_id', user.id)
+            .eq('match_id', mid)
+            .eq('tournament_id', tid)
+            .select()
+          error = result.error
+        } else {
+          const result = await supabase
+            .from('predictions')
+            .insert({ user_id: user.id, match_id: mid, pred_home: home, pred_away: away, tournament_id: tid, pred_classifier: classifier })
+            .select()
+          error = result.error
+        }
 
-      if (existing) {
-        // UPDATE filtrando también por tournament_id para no pisar otros torneos
-        ;({ error } = await supabase
-          .from('predictions')
-          .update({ pred_home: home, pred_away: away, pred_classifier: classifier })
-          .eq('user_id', user.id)
-          .eq('match_id', mid)
-          .eq('tournament_id', tid))
-      } else {
-        ;({ error } = await supabase
-          .from('predictions')
-          .insert({ user_id: user.id, match_id: mid, pred_home: home, pred_away: away, tournament_id: tid, pred_classifier: classifier }))
-      }
-
-      if (error) {
-        console.error('Error guardando predicción:', error)
-      } else {
-        count++
-        newPredictions[mid] = {
-          ...(existing || {}),
-          user_id: user.id,
-          match_id: mid,
-          pred_home: home,
-          pred_away: away,
-          tournament_id: tid,
-          points: existing?.points ?? 0,
-          scored_at: existing?.scored_at ?? null,
+        if (error) {
+          console.error('Error guardando predicción:', error)
+          lastError = error
+        } else {
+          count++
+          newPredictions[mid] = {
+            ...(existing || {}),
+            user_id: user.id,
+            match_id: mid,
+            pred_home: home,
+            pred_away: away,
+            tournament_id: tid,
+            points: existing?.points ?? 0,
+            scored_at: existing?.scored_at ?? null,
+          }
         }
       }
-    }
 
-    // Actualizar estado local inmediatamente
-    setPredictions(newPredictions)
-    setDrafts({})
-    setSavedCount(count)
-    setTimeout(() => setSavedCount(0), 3000)
-    triggerRefresh()
-    setSaving(false)
+      setPredictions(newPredictions)
+      setDrafts({})
+      setSavedCount(count)
+      if (lastError) {
+        setSaveError(`Error: ${lastError.message || lastError.code || JSON.stringify(lastError)}`)
+      } else {
+        setTimeout(() => setSavedCount(0), 3000)
+      }
+      triggerRefresh()
+      setSaving(false)
 
-    // Sincronizar con DB en background
-    fetchPredictions(user.id, activeTournament?.id).then(pMap => setPredictions(pMap))
+      fetchPredictions(user.id, activeTournament?.id).then(pMap => setPredictions(pMap))
     } catch (err) {
       console.error('Error en saveDrafts:', err)
+      setSaveError(`Error inesperado: ${err.message}`)
       setSaving(false)
     }
   }
@@ -278,7 +287,6 @@ export default function MatchesPage() {
                             : {}}
                       />
                     </div>
-                    {/* Selector de clasificado: solo en KO cuando el pronóstico es empate */}
                     {match.phase !== 'group' && (() => {
                       const h = draft?.home !== undefined ? draft.home : hasSaved ? pred.pred_home : null
                       const a = draft?.away !== undefined ? draft.away : hasSaved ? pred.pred_away : null
@@ -327,6 +335,12 @@ export default function MatchesPage() {
         <div className="save-bar" style={{ background: 'var(--green-dark)' }}>
           <span>✓ {savedCount} pronóstico(s) guardados</span>
           <span />
+        </div>
+      )}
+      {saveError && (
+        <div className="save-bar" style={{ background: 'var(--red)' }}>
+          <span style={{ fontSize: '12px' }}>{saveError}</span>
+          <button onClick={() => setSaveError(null)}>✕</button>
         </div>
       )}
     </>

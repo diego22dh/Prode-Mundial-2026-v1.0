@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { flagUrl } from '../lib/flags'
 import { supabase } from '../lib/supabase'
-import { useAuth } from '../hooks/useAuth'
+import { useAuth } from '../lib/authContext.jsx'
 
 const PHASES = { group:'Fase de grupos', R32:'Ronda de 16', R16:'Octavos', QF:'Cuartos', SF:'Semis', '3rd':'3er puesto', F:'Final' }
 
@@ -54,7 +54,6 @@ function MatchesTab({ profile }) {
     const awayN = parseInt(s.away)
     const isDraw = homeN === awayN
 
-    // En KO con empate, el clasificado es obligatorio
     if (isKO && isDraw && !s.classifier) {
       setMsg('Es eliminatoria con empate: seleccioná quién clasificó'); return
     }
@@ -156,7 +155,6 @@ function MatchesTab({ profile }) {
                   <span style={{ color: 'var(--gray-400)' }}>-</span>
                   <input className="admin-score-input" type="number" min="0" max="30" placeholder="V"
                     value={scores[m.id]?.away ?? ''} onChange={e => handleScore(m.id, 'away', e.target.value)} />
-                  {/* Clasificado: obligatorio en KO con empate */}
                   {m.phase !== 'group' &&
                    scores[m.id]?.home !== undefined &&
                    scores[m.id]?.away !== undefined &&
@@ -191,7 +189,7 @@ function MatchesTab({ profile }) {
 function UsersTab({ currentProfile }) {
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
-  const [editing, setEditing] = useState(null)   // profile id en edición
+  const [editing, setEditing] = useState(null)
   const [editName, setEditName] = useState('')
   const [editAdmin, setEditAdmin] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -232,10 +230,8 @@ function UsersTab({ currentProfile }) {
     if (userId === currentProfile?.id) { setMsg('No podés eliminarte a vos mismo'); return }
     if (!window.confirm(`¿Eliminar al usuario "${username}"?\nSe borrarán su perfil y todos sus pronósticos.\nNota: la cuenta de acceso (email) queda inhabilitada pero debe eliminarse manualmente desde Supabase > Authentication > Users.`)) return
     setSaving(true)
-    // Borrar predicciones y membresías
     await supabase.from('predictions').delete().eq('user_id', userId)
     await supabase.from('tournament_members').delete().eq('user_id', userId)
-    // Borrar perfil — el FK ON DELETE CASCADE limpia datos relacionados
     const { error } = await supabase.from('profiles').delete().eq('id', userId)
     if (error) setMsg(error.message)
     else setMsg(`✓ Perfil de "${username}" eliminado. Eliminá la cuenta en Supabase > Auth > Users si es necesario.`)
@@ -260,7 +256,6 @@ function UsersTab({ currentProfile }) {
         {users.map(u => (
           <div key={u.id} style={{ padding: '10px 16px', borderBottom: '1px solid var(--gray-200)', display: 'flex', alignItems: 'center', gap: '8px' }}>
             {editing === u.id ? (
-              // Modo edición
               <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                 <input
                   className="input"
@@ -280,7 +275,6 @@ function UsersTab({ currentProfile }) {
                 </button>
               </div>
             ) : (
-              // Modo vista
               <>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--gray-800)', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -318,34 +312,20 @@ function UsersTab({ currentProfile }) {
   )
 }
 
-
-
 // ─── Sección: Partidos eliminatorios ─────────────────────
 
 const ALL_TEAMS = [
-  // Grupo A
   'México', 'Sudáfrica', 'Corea del Sur', 'Rep. Checa',
-  // Grupo B
   'Canadá', 'Bosnia y Herz.', 'Qatar', 'Suiza',
-  // Grupo C
   'Brasil', 'Marruecos', 'Haití', 'Escocia',
-  // Grupo D
   'Estados Unidos', 'Paraguay', 'Australia', 'Turquía',
-  // Grupo E
   'Alemania', 'Curazao', 'Costa de Marfil', 'Ecuador',
-  // Grupo F
   'Países Bajos', 'Japón', 'Suecia', 'Túnez',
-  // Grupo G
   'Bélgica', 'Egipto', 'Irán', 'Nueva Zelanda',
-  // Grupo H
   'España', 'Cabo Verde', 'Arabia Saudita', 'Uruguay',
-  // Grupo I
   'Francia', 'Senegal', 'Irak', 'Noruega',
-  // Grupo J
   'Argentina', 'Argelia', 'Austria', 'Jordania',
-  // Grupo K
   'Portugal', 'RD del Congo', 'Uzbekistán', 'Colombia',
-  // Grupo L
   'Inglaterra', 'Croacia', 'Ghana', 'Panamá',
 ].sort((a, b) => a.localeCompare(b, 'es'))
 
@@ -395,10 +375,9 @@ function EliminatoriosTab() {
       setMsg('Completá todos los campos obligatorios'); return
     }
     setSaving(true)
-    // Combinar fecha y hora en UTC (el input es hora BsAs GMT-3)
     const localDT = `${form.match_date}T${form.match_time}:00`
     const d = new Date(localDT)
-    d.setHours(d.getHours() + 3) // convertir GMT-3 → UTC
+    d.setHours(d.getHours() + 3)
     const { error } = await supabase.from('matches').insert({
       phase:      form.phase,
       home_team:  form.home_team.trim(),
@@ -424,7 +403,6 @@ function EliminatoriosTab() {
     await fetchElim()
   }
 
-  // Agrupar por fase
   const grouped = {}
   matches.forEach(m => {
     const key = PHASES[m.phase] || m.phase
@@ -443,7 +421,6 @@ function EliminatoriosTab() {
         </div>
       )}
 
-      {/* Formulario nuevo partido */}
       {showForm ? (
         <div className="card" style={{ marginBottom: '12px', padding: '16px' }}>
           <div className="card-header" style={{ margin: '-16px -16px 14px', padding: '10px 16px' }}>
@@ -503,7 +480,6 @@ function EliminatoriosTab() {
         </button>
       )}
 
-      {/* Lista de partidos eliminatorios */}
       {Object.keys(grouped).length === 0 && (
         <div className="empty">
           <div className="empty-icon">📋</div>
@@ -596,7 +572,6 @@ function TournamentsTab() {
         </div>
       )}
 
-      {/* Pendientes */}
       {pending.length > 0 && (
         <div className="card" style={{ marginBottom: '12px' }}>
           <div className="card-header">
@@ -621,7 +596,6 @@ function TournamentsTab() {
         </div>
       )}
 
-      {/* Activos */}
       <div className="card">
         <div className="card-header">
           <span>Torneos activos</span>
@@ -650,7 +624,7 @@ function TournamentsTab() {
 export default function AdminPage() {
   const { profile } = useAuth()
   const navigate = useNavigate()
-  const [section, setSection] = useState('matches') // 'matches' | 'users'
+  const [section, setSection] = useState('matches')
 
   useEffect(() => {
     if (profile && !profile.is_admin) navigate('/partidos')

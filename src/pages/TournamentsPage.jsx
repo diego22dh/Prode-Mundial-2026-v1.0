@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useAuth } from '../hooks/useAuth'
+import { useAuth } from '../lib/authContext.jsx'
 import { useTournament } from '../hooks/useTournament'
 
 export default function TournamentsPage() {
@@ -56,7 +56,6 @@ export default function TournamentsPage() {
         </div>
       )}
 
-      {/* Torneo activo */}
       {activeTournament && (
         <div className="card" style={{ marginBottom: '12px', padding: '12px 16px', background: 'var(--green-light)', border: '1px solid var(--green)' }}>
           <div style={{ fontSize: '11px', color: 'var(--green)', fontWeight: 600, marginBottom: '2px' }}>TORNEO ACTIVO</div>
@@ -65,7 +64,6 @@ export default function TournamentsPage() {
         </div>
       )}
 
-      {/* Lista de torneos activos */}
       <div className="card" style={{ marginBottom: '12px' }}>
         <div className="card-header">
           <span>Torneos disponibles</span>
@@ -116,7 +114,6 @@ export default function TournamentsPage() {
         })}
       </div>
 
-      {/* Solicitudes pendientes del usuario */}
       {pending.length > 0 && (
         <div className="card" style={{ marginBottom: '12px' }}>
           <div className="card-header">Mis solicitudes pendientes</div>
@@ -132,7 +129,6 @@ export default function TournamentsPage() {
         </div>
       )}
 
-      {/* Crear torneo */}
       {!showCreate ? (
         <button className="btn-primary" onClick={() => setShowCreate(true)}>
           + Solicitar nuevo torneo
