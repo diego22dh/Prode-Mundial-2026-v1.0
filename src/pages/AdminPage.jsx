@@ -440,6 +440,12 @@ function EliminatoriosTab() {
                   <option value="">Seleccionar...</option>
                   {ALL_TEAMS.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
+                {form.home_team && flagUrl(form.home_team) && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px' }}>
+                    <img src={flagUrl(form.home_team)} width="24" height="18" style={{ borderRadius: '2px' }} alt="" />
+                    <span style={{ fontSize: '13px', color: 'var(--gray-700)' }}>{form.home_team}</span>
+                  </div>
+                )}
               </div>
               <div>
                 <label style={{ fontSize: '12px', color: 'var(--gray-400)', marginBottom: '4px', display: 'block' }}>Equipo visitante *</label>
@@ -447,6 +453,12 @@ function EliminatoriosTab() {
                   <option value="">Seleccionar...</option>
                   {ALL_TEAMS.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
+                {form.away_team && flagUrl(form.away_team) && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px' }}>
+                    <img src={flagUrl(form.away_team)} width="24" height="18" style={{ borderRadius: '2px' }} alt="" />
+                    <span style={{ fontSize: '13px', color: 'var(--gray-700)' }}>{form.away_team}</span>
+                  </div>
+                )}
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
