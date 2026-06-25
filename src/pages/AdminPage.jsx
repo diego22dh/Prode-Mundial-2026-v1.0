@@ -375,14 +375,14 @@ function EliminatoriosTab() {
       setMsg('Completá todos los campos obligatorios'); return
     }
     setSaving(true)
-    const localDT = `${form.match_date}T${form.match_time}:00`
-    const d = new Date(localDT)
-    d.setHours(d.getHours() + 3)
+    // Pasar el offset explícito -03:00 para que Postgres interprete correctamente
+    // sin manipulación manual de horas (que causaba doble conversión en browsers UTC-3)
+    const match_date = `${form.match_date}T${form.match_time}:00-03:00`
     const { error } = await supabase.from('matches').insert({
       phase:      form.phase,
       home_team:  form.home_team.trim(),
       away_team:  form.away_team.trim(),
-      match_date: d.toISOString(),
+      match_date: match_date,
       venue:      form.venue.trim() || null,
       status:     'upcoming'
     })
